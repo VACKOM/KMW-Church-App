@@ -6,6 +6,9 @@ import Sidebar from './scenes/global/SideBar';
 import Dashboard from './scenes/dashboard';
 import Centers from './scenes/centers';
 import AddCenter from './scenes/centers/addCenter';
+import Zones from './scenes/zones';
+import AddZone from './scenes/zones/addZones';
+
 
 const App = () => {
   const [theme, colorMode] = useMode();
@@ -21,6 +24,9 @@ const App = () => {
               <Route path='/' element={<Dashboard />} />
               <Route path='/centers' element={<Centers />} />
               <Route path='/add-center' element={<AddCenter />} />
+              <Route path='/zones' element={<Zones />} />
+              <Route path='/add-zone' element={<AddZone />} />
+
             </Routes>
           </main>
         </div>
