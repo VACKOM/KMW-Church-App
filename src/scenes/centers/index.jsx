@@ -10,128 +10,112 @@ import Topbar from "../global/TopBar";  // Import your Topbar component
 const Centers = ({}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-//   const [centers, setCenters] = useState([]);
-//   const [centersList, setCentersList] = useState([]);
-//   const [loading, setLoading] = useState(true); // Add a loading state
-//   const [error, setError] = useState(null); // Add an error state
-//   const [searchQuery, setSearchQuery] = useState("");
+  const [centers, setCenters] = useState([]);
+  const [centersList, setCentersList] = useState([]);
+  const [loading, setLoading] = useState(true); // Add a loading state
+  const [error, setError] = useState(null); // Add an error state
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
   
 
-//   // Fetch centers
-//   useEffect(() => {
-//     const fetchCenters = async () => {
-//       try {
-//         const response = await axios.get('https://node-js-inventory-system.onrender.com/api/asset/');
-//         setCenters(response.data);
-//         setLoading(false);  // Data is loaded
-//       } catch (error) {
-//         console.error('Error fetching centers:', error);
-//         setError('Failed to load centers or no centers available');
-//         setLoading(false);  // Data loading is done, but there was an error
-//       }
-//     };
-//     fetchCenters();
-//   }, []);
+  // Fetch centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/centers/');
+        setCenters(response.data);
+        setLoading(false);  // Data is loaded
+       
+      } catch (error) {
+        console.error('Error fetching centers:', error);
+        setError('Failed to load centers or no centers available');
+        setLoading(false);  // Data loading is done, but there was an error
+      }
+    };
+    fetchCenters();
+  }, []);
 
-//   // Update centers list when centers data is fetched
-//   useEffect(() => {
-//     if (centers.length > 0) {
-//       const combinedData = centers
-//         .filter((asset) => asset.quantity > 0)  // Filter out centers with quantity 0
-//         .map((asset) => {
-//           return {
-//             ID: asset._id,
-//             id: asset.assetId, // Ensure each row has a unique 'id' property
-//             assetId: asset.assetId,
-//             name: asset.name,
-//             description: asset.description,
-//             quantity: asset.quantity ? asset.quantity : 0,
-//             qtyTaken: asset.qtyTaken,
-//             requestingOfficer: asset.requestingOfficer,
-//             requestContact: asset.requestContact,
-//             location: asset.location,
-//             category: asset.category,
-//             access: asset.access, // Assuming you have 'access' in your asset data
-//           };
-//         });
-//       setCentersList(combinedData);  // Update the centersList state
-//     }
-//   }, [centers]);
-  
-
+  // Update centers list when centers data is fetched
+  useEffect(() => {
+    if (centers.length > 0) {
+      const combinedData = centers.map((center) => {
+          return {
+            ID: center._id,
+            id: center.centerID, // Ensure each row has a unique 'id' property
+            //centerId: center.centerId,
+            centerName: center.centerName,
+            centerLeader: center.centerLeader,
+            centerContact: center.centerContact,
+            centerEmail: center.centerEmail
+            
+          };
+        });
+      setCentersList(combinedData);  // Update the centersList state
+      
+    }
+  }, [centers]);
+ 
 //   // Button to generate QR Code
 //   const handleButtonClick = (rowData) => {
-//     console.log("Button clicked for asset: ", rowData);
-//     const qrcode = `Asset ID: ${rowData.assetId}, Asset Name: ${rowData.name}, Asset Description: ${rowData.description}, Asset Location: ${rowData.location}`;
+//     console.log("Button clicked for center: ", rowData);
+//     const qrcode = `Center ID: ${rowData.centerId}, Center Name: ${rowData.name}, Center Description: ${rowData.description}, Center Location: ${rowData.location}`;
 //     navigate(`/qrcode-generator?qrcode=${encodeURIComponent(qrcode)}`);
 //   };
 
 //   // Button to generate Claims
 //   const handleClaimClick = (rowData) => {
-//     navigate(`/claim-asset`);
+//     navigate(`/claim-center`);
 //   };
 
-  // Button Add New Asset click handler
+  // Button Add New Center click handler
   const handleAddButtonClick = () => {
     navigate("/add-center");
   };
 
-//   const handleSearch = (query) => {
-//     setSearchQuery(query); // Update the search query state 
-//   };
+  const handleSearch = (query) => {
+    setSearchQuery(query); // Update the search query state 
+  };
 
-//   // Filter centers based on the search query
-//   const filteredCenters = centersList.filter(asset => {
-//     const query = searchQuery.toLowerCase(); // Normalize the search query
-//     return (
-//       asset.name.toLowerCase().includes(query) ||
-//       asset.description.toLowerCase().includes(query) ||
-//       asset.requestingOfficer.toLowerCase().includes(query) ||
-//       asset.requestContact.toLowerCase().includes(query)
-//     );
-//   });
+  // Filter centers based on the search query
+  const filteredCenters = centersList.filter(center => {
+    const query = searchQuery.toLowerCase(); // Normalize the search query
+    return (
+      center.centerName.toLowerCase().includes(query) ||
+      center.centerLeader.toLowerCase().includes(query) ||
+      center.centerContact.toLowerCase().includes(query) ||
+      center.centerEmail.toLowerCase().includes(query) 
+     
+    );
+  });
+ 
 
 //   // Handle row update (when user types into the grid)
 //   const handleRowEdit = async (updatedRow) => {
-//     const updatedCenters = centersList.map((asset) =>
-//       asset.ID === updatedRow.ID ? { ...asset, ...updatedRow } : asset
+//     const updatedCenters = centersList.map((center) =>
+//       center.ID === updatedRow.ID ? { ...center, ...updatedRow } : center
 //     );
 //     setCentersList(updatedCenters);  // Update local state immediately for a better user experience
 
 //     try {
-//       // Make an API call to update the asset on the server
-//       await axios.put(`https://node-js-inventory-system.onrender.com/api/asset/${updatedRow.ID}`, updatedRow);
+//       // Make an API call to update the center on the server
+//       await axios.put(`https://node-js-inventory-system.onrender.com/api/center/${updatedRow.ID}`, updatedRow);
 //     } catch (error) {
-//       console.error('Error updating asset:', error);
+//       console.error('Error updating center:', error);
 //     }
 
 //     return updatedRow; // Return the updated row data for the grid to process
 //   };
 
-//   // Columns for DataGrid with editable fields
-//   const columns = [
-//     { field: "id", headerName: "Asset ID", editable: false },
-//     { field: "name", headerName: "Asset Name", flex: 1, editable: true },
-//     { field: "description", headerName: "Description", flex: 1, editable: true },
-//     { field: "quantity", headerName: "Quantity", type: "number", headerAlign: "left", align: "left", editable: true },
-//     { field: "requestingOfficer", headerName: "Requesting Officer", flex: 1, editable: true },
-//     { field: "requestContact", headerName: "Contact", flex: 1, editable: true },
-//     {
-//       field: "qrCode", // This field represents the button
-//       headerName: "QR Code",
-//       renderCell: (params) => (
-//         <Button
-//           variant="contained"
-//           color="neutral"
-//           onClick={() => handleButtonClick(params.row)} // Use the row data as needed
-//         >
-//           Generate
-//         </Button>
-//       ),
-//       width: 150, // You can adjust the width as needed
-//     },
-//   ];
+  // Columns for DataGrid with editable fields
+  const columns = [
+
+    { field: "id", headerName: "Center ID", editable: false },
+    { field: "centerName", headerName: "Center Name", flex: 1, editable: true },
+    { field: "centerLeader", headerName: "Center Pastor", flex: 1, editable: true },
+    { field: "centerContact", headerName: "Center Contact", flex: 1, editable: true },
+    { field: "centerEmail", headerName: "Center Email", flex: 1, editable: true }
+   
+  ];
 
 
 //   const handleSelectionModelChange = (selectionModel) => {
@@ -140,14 +124,14 @@ const Centers = ({}) => {
 
 //     // Check if the selectionModel is not empty
 //     if (selectionModel && selectionModel.length > 0) {
-//         const selectedAssetIds = selectionModel.map((id) => {
-//             const asset = centersList.find((asset) => asset.id === id);
-//             return asset ? asset.assetId : null;
-//         }).filter((assetId) => assetId !== null);  // Filter out any null values
+//         const selectedCenterIds = selectionModel.map((id) => {
+//             const center = centersList.find((center) => center.id === id);
+//             return center ? center.centerId : null;
+//         }).filter((centerId) => centerId !== null);  // Filter out any null values
 
-//         // Show the alert with the selected asset IDs
-//         if (selectedAssetIds.length > 0) {
-//             alert(`Selected Asset IDs: ${selectedAssetIds.join(', ')}`);
+//         // Show the alert with the selected center IDs
+//         if (selectedCenterIds.length > 0) {
+//             alert(`Selected Center IDs: ${selectedCenterIds.join(', ')}`);
 //         }
 //     } else {
 //         console.log('No rows selected');
@@ -165,18 +149,18 @@ const Centers = ({}) => {
 
 //   if (columnName === "requestContact") {
 //     requestInput = cellValue;       // Now you can reassign the value
-//     navigate(`/claim-asset?requestInput=${encodeURIComponent(requestInput)}`);
+//     navigate(`/claim-center?requestInput=${encodeURIComponent(requestInput)}`);
 //   }
 //   else if (columnName === "requestingOfficer") {
 //     requestInput = cellValue;       // Now you can reassign the value
-//     navigate(`/claim-asset?requestInput=${encodeURIComponent(requestInput)}`);
+//     navigate(`/claim-center?requestInput=${encodeURIComponent(requestInput)}`);
 //   }
 //   else if (columnName === "id") {
-//     const requestInput = cellValue; // Get the cell value as the assetId
-//     // URL-encode the requestInput (AssetId)
+//     const requestInput = cellValue; // Get the cell value as the centerId
+//     // URL-encode the requestInput (CenterId)
 //     const encodedInput = encodeURIComponent(requestInput);
-//     // Navigate with the encoded assetId as a query parameter
-//     navigate(`/claim-asset?requestInput=${encodedInput}`);
+//     // Navigate with the encoded centerId as a query parameter
+//     navigate(`/claim-center?requestInput=${encodedInput}`);
 // }
 // };
 
@@ -185,7 +169,7 @@ const Centers = ({}) => {
   return (
     <Box m="20px">
       <Box>
-        {/* <Topbar onSearch={handleSearch} /> Pass the handleSearch function */}
+        <Topbar onSearch={handleSearch} /> 
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -204,12 +188,12 @@ const Centers = ({}) => {
             color="secondary"
             onClick={handleClaimClick}
           >
-            Asset Claims
+            Center Claims
           </Button> */}
         </Box>
       </Box>
 
-      {/* {loading ? (
+      {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height="75vh">
           <CircularProgress />
         </Box>
@@ -221,12 +205,12 @@ const Centers = ({}) => {
             //checkboxSelection 
             rows={filteredCenters} 
             columns={columns} 
-            processRowUpdate={handleRowEdit} // Handle row edits
-            onCellClick={handleCellClick}  // Add this to handle cell clicks
-            onSelectionModelChange={handleSelectionModelChange}  // Correct event handler for checkbox clicks
+            //processRowUpdate={handleRowEdit} // Handle row edits
+            //onCellClick={handleCellClick}  // Add this to handle cell clicks
+           // onSelectionModelChange={handleSelectionModelChange}  // Correct event handler for checkbox clicks
           />
         </Box>
-      )} */}
+      )}
     </Box>
   );
 };

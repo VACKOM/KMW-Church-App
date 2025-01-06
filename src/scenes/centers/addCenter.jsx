@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 // Validation Schema
 const centerSchema = yup.object().shape({
-  centerId: yup.string(),
+  centerID: yup.string(),
   centerName: yup.string().required("Center name is required"),
   centerLeader: yup.string().required("Center Leader's name is required"),
   centerContact: yup.string().required("Center Leader contact is required"),
@@ -46,7 +46,7 @@ const AddCenter = () => {
 
       <Formik
         initialValues={{
-          centerId: generateID, // Set the center ID as the generated ID
+          centerID: generateID, // Set the center ID as the generated ID
           centerName: '',
           centerLeader: '',
           centerContact: '',
@@ -79,7 +79,7 @@ const AddCenter = () => {
                 variant="filled"
                 label="Center ID"
                 value={generateID}
-                name="centerId"
+                name="centerID"
                 sx={{ gridColumn: "span 4" }}
                 disabled
               />
