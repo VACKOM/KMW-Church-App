@@ -25,7 +25,7 @@ const Bacentas = ({}) => {
         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
         setBacentas(response.data);
         setLoading(false);  // Data is loaded
-        console.log(response.data);
+       
        
       } catch (error) {
         console.error('Error fetching bacentas:', error);
@@ -93,6 +93,7 @@ const Bacentas = ({}) => {
       bacenta.zone.toLowerCase().includes(query)
      
     );
+    
   });
  
 

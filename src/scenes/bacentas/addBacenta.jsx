@@ -54,10 +54,11 @@ const Bacenta = () => {
 
   // Handle form submission
   const handleSubmit = async (values) => {
+    console.log(values);
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/bacentas/', values);
       alert('Bacenta registered successfully!');
-      console.log(response.data);
+      
       navigate("/bacentas");
     } catch (error) {
       console.error('There was an error registering the bacenta!', error); 

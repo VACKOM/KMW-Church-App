@@ -175,7 +175,7 @@ const Zones = ({}) => {
         <Topbar onSearch={handleSearch} /> 
       </Box>
 
-      <Box display="flex" justifyContent="space-between" alignItems="zone">
+      <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="Zones List" subtitle="Managing the Zones" />
         <Box display="flex" justifyContent="flex-end" gap="10px">
           <Button
@@ -197,11 +197,11 @@ const Zones = ({}) => {
       </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="zone" alignItems="zone" height="75vh">
+        <Box display="flex" justifyContent="center" alignItems="center" height="75vh">
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Typography color="error" variant="h6" align="zone">{error}</Typography>
+        <Typography color="error" variant="h6" align="center">{error}</Typography>
       ) : (
         <Box m="40px 0 0 0" height="75vh">
           <DataGrid 
