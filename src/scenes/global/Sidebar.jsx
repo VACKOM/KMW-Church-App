@@ -161,6 +161,21 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+
+<Typography
+              variant="h6"
+              color={colors.grey[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Bacentas Management
+            </Typography>
+            <Item
+              title="Bacentas"
+              to="/bacentas"
+              icon={<InventoryOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
             {/* <Item
               title="Categories"
               to="/categories"
