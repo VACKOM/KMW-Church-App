@@ -28,7 +28,7 @@ const Zone = () => {
   useEffect(() => {
     const fetchCenter = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/centers/");
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
         setCenter(response.data); // Adjust according to your API response
       } catch (error) {
         console.error("Error fetching center:", error);
@@ -50,7 +50,7 @@ const Zone = () => {
   // Handle form submission
   const handleSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/zones/', values);
+      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/zones/', values);
       alert('Zone registered successfully!');
       console.log(response.data);
       navigate("/zones");

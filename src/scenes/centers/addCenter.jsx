@@ -29,7 +29,7 @@ const AddCenter = () => {
   const handleSubmit = async (values) => {
     setIsLoading(true); // Set loading to true
     try {
-      const response = await axios.post('http://localhost:8080/api/centers/', values);
+      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/centers/', values);
       alert('Center registered successfully!');
       navigate("/centers");
     } catch (error) {

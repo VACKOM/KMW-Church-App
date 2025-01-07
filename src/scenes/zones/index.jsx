@@ -22,7 +22,7 @@ const Zones = ({}) => {
   useEffect(() => {
     const fetchZones = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/zones/');
+        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/zones/');
         setZones(response.data);
         setLoading(false);  // Data is loaded
        
