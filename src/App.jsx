@@ -8,6 +8,8 @@ import Centers from './scenes/centers';
 import AddCenter from './scenes/centers/addCenter';
 import Zones from './scenes/zones';
 import AddZone from './scenes/zones/addZones';
+import Bacenta from './scenes/bacentas/AddBacenta';
+import Bacentas from './scenes/bacentas';
 
 
 const App = () => {
@@ -26,6 +28,8 @@ const App = () => {
               <Route path='/add-center' element={<AddCenter />} />
               <Route path='/zones' element={<Zones />} />
               <Route path='/add-zone' element={<AddZone />} />
+              <Route path='/bacentas' element={<Bacentas />} />
+              <Route path='/add-bacenta' element={<Bacenta />} />
 
             </Routes>
           </main>
