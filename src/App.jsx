@@ -10,6 +10,8 @@ import Zones from './scenes/zones';
 import AddZone from './scenes/zones/addZones';
 import Bacenta from './scenes/bacentas/addBacenta';
 import Bacentas from './scenes/bacentas';
+import Attendance from './scenes/bacentas/attendance'
+import AddAttendance from './scenes/bacentas/addAttendance'
 // import Target from './scenes/centers/addTarget';
 
 const App = () => {
@@ -30,6 +32,8 @@ const App = () => {
               <Route path='/add-zone' element={<AddZone />} />
               <Route path='/bacentas' element={<Bacentas />} />
               <Route path='/add-bacenta' element={<Bacenta />} />
+              <Route path='/attendance' element={<Attendance />} />
+              <Route path='/add-attendance' element={<AddAttendance />} />
               {/* <Route path='/add-target' element={<Target />} /> */}
             </Routes>
           </main>

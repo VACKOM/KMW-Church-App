@@ -183,13 +183,13 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            {/* <Item
-              title="Categories"
-              to="/categories"
+            <Item
+              title="Attendance"
+              to="/attendance"
               icon={<CategoryOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-            /> */}
+            />
             {/* <Item
               title="Suppliers"
               to="/suppliers"
