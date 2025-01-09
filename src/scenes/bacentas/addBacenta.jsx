@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
 
 
 // Validation Schema
@@ -27,6 +29,7 @@ const Bacenta = () => {
 
   // State hooks to hold data
   const [zone, setZone] = useState([]);
+  const [center, setCenter] = useState([]);
   const navigate = useNavigate(); // Initialize the navigate function
 
   // Fetch Zones data
@@ -42,19 +45,34 @@ const Bacenta = () => {
     fetchZones();
   }, []);
 
+   // Fetch Center data
+   useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
+        setCenter(response.data); // Adjust according to your API response
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching center:", error);
+      }
+    };
+    fetchCenters();
+  }, []);
 
 
 
-  // SKU generation logic (zone, random number)
-  const generateID = (zone) => {
+
+  // SKU generation logic (bacenta, random number)
+  const generateID = (center, zone) => {
+    const centerPrefix = center.substring(0, 2).toUpperCase();
     const zonePrefix = zone.substring(0, 2).toUpperCase();
     const randomNum = Math.floor(Math.random() * 1000);
-    return `ZON/${zonePrefix}/${randomNum}`;
+    return `BAC/${zonePrefix}/${centerPrefix}/${randomNum}`;
   };
 
   // Handle form submission
   const handleSubmit = async (values) => {
-    console.log(values);
+   
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/bacentas/', values);
       alert('Bacenta registered successfully!');
@@ -66,6 +84,8 @@ const Bacenta = () => {
     }
   };
 
+ 
+
   return (
     <Box m="20px">
       <Header title="Create Bacenta" subtitle="Create a New Bacenta" />
@@ -75,6 +95,7 @@ const Bacenta = () => {
           bacentaName: '',
           bacentaLeader: '',
           zone:'',
+          center:'',
           bacentaID: '',
           bacentaLocation:'',
           bacentaContact: '',
@@ -118,6 +139,40 @@ const Bacenta = () => {
                 disabled
               />
 
+               {/* Center Select */}
+               <FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.center && !!errors.center}
+              >
+                <InputLabel id="center-label">Center</InputLabel>
+                <Select
+                  labelId="center-label"
+                  id="center"
+                  value={values.center}
+                  onChange={(e) => {
+                    const selectedCenter = e.target.value;
+                    setFieldValue('center', selectedCenter);
+                    const sku = generateID(selectedCenter, values.zone);
+                    setFieldValue('bacentaID', sku);
+                  }}
+                  onBlur={handleBlur}
+                  name="center"
+                  label="Center"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {center.map((cat) => (
+                    <MenuItem key={cat._id} value={cat.centerName}>
+                      {cat.centerName}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{touched.center && errors.center}</FormHelperText>
+              </FormControl>
+
                {/* Zone Select */}
                <FormControl
                 variant="filled"
@@ -133,7 +188,7 @@ const Bacenta = () => {
                   onChange={(e) => {
                     const selectedZone = e.target.value;
                     setFieldValue('zone', selectedZone);
-                    const sku = generateID(selectedZone, values.zone);
+                    const sku = generateID( values.center, selectedZone);
                     setFieldValue('bacentaID', sku);
                   }}
                   onBlur={handleBlur}
@@ -151,6 +206,7 @@ const Bacenta = () => {
                 </Select>
                 <FormHelperText>{touched.zone && errors.zone}</FormHelperText>
               </FormControl>
+
 
                 {/* Bacenta Name */}
               <TextField
@@ -224,7 +280,6 @@ const Bacenta = () => {
                 sx={{ gridColumn: "span 4" }}
               />
 
-              {/* Date Started*/}
               {/* <DatePicker
                 label="Bacenta Date Started"
                 value={values.bacentaDateStarted}

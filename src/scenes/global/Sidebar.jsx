@@ -140,12 +140,19 @@ const Sidebar = () => {
               Centers Management
             </Typography>
             <Item
-              title="Centers"
+              title="Centers List"
               to="/centers"
               icon={<InventoryOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
+             {/* <Item
+              title="Targets"
+              to="/add-target"
+              icon={<InventoryOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            /> */}
 
 <Typography
               variant="h6"

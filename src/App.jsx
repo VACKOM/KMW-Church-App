@@ -8,9 +8,9 @@ import Centers from './scenes/centers';
 import AddCenter from './scenes/centers/addCenter';
 import Zones from './scenes/zones';
 import AddZone from './scenes/zones/addZones';
-import Bacenta from './scenes/bacentas/AddBacenta';
+import Bacenta from './scenes/bacentas/addBacenta';
 import Bacentas from './scenes/bacentas';
-
+// import Target from './scenes/centers/addTarget';
 
 const App = () => {
   const [theme, colorMode] = useMode();
@@ -30,7 +30,7 @@ const App = () => {
               <Route path='/add-zone' element={<AddZone />} />
               <Route path='/bacentas' element={<Bacentas />} />
               <Route path='/add-bacenta' element={<Bacenta />} />
-
+              {/* <Route path='/add-target' element={<Target />} /> */}
             </Routes>
           </main>
         </div>

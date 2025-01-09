@@ -72,6 +72,9 @@ const Centers = ({}) => {
     navigate("/add-center");
   };
 
+    // Button Add New Target click handler
+
+
   const handleSearch = (query) => {
     setSearchQuery(query); // Update the search query state 
   };
@@ -186,9 +189,9 @@ const Centers = ({}) => {
           {/* <Button
             variant="contained"
             color="secondary"
-            onClick={handleClaimClick}
+            onClick={handleAddTargetClick}
           >
-            Center Claims
+            Add Yearly Target
           </Button> */}
         </Box>
       </Box>
