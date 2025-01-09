@@ -12,18 +12,20 @@ import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
 
 // Validation Schema
 const attendanceSchema = yup.object().shape({
-    bacentaMembership: yup.string().required("Enter Membership data"),
-    adultAttendance: yup.string().required("Enter Adult Attendance"),
+    bacentaMembership: yup.string().required("Membership Number is required"),
+    adultAttendance: yup.string().required("Adult Attendance is required"),
     // attendanceID: yup.string(),
-    childrenAttendance: yup.string().required("Enter Children Attendance"),
-    soulsInChurch: yup.string().required("Enter number of Souls Brought Today"),
-    newBelieversSchoolAttendance: yup.string().required("New Belivers School Attendance"),
-    bacentaMeetingAttendance: yup.string().required("Bacenta Meeting Attendance"),
-    membersAbsent: yup.string().required("Number of Members Absent"),
-    laySchoolAttendance: yup.string().required("Lay schools Attendance"),
-    centerName: yup.string().required("Name of Center"),
-    bacentaName: yup.string().required("Number of Bacenta"),
-    dateAttendance: yup.string().required("Date Filled"),
+    childrenAttendance: yup.string().required("Children Attendance is required"),
+    soulsInChurch: yup.string().required("No of Souls Brought Today is required"),
+    newBelieversSchoolAttendance: yup.string().required("New Belivers School attendance is required"),
+    bacentaMeetingAttendance: yup.string().required("Bacenta Meeting attendance is required"),
+    membersAbsent: yup.string().required("Number of Members Absent is required"),
+    laySchoolAttendance: yup.string().required("Lay schools attendance is required"),
+    centerName: yup.string().required("Center is required"),
+    bacentaName: yup.string().required("Bacenta Name is required"),
+    noBacentaMeeting: yup.string().required("No of no Bacenta Meeting is required"),
+    dateAttendance: yup.string().required("Attendance Date is required")
+
   });
 
 const addAttendance = () => {
@@ -117,6 +119,7 @@ const addAttendance = () => {
             centerName: "",
             bacentaName: "",
             dateAttendance: "",
+            noBacentaMeeting:""
           }}
           validationSchema={attendanceSchema}
           onSubmit={handleSubmit}
@@ -425,6 +428,22 @@ const addAttendance = () => {
                   name="membersAbsent"
                   error={!!touched.membersAbsent && !!errors.membersAbsent}
                   helperText={touched.membersAbsent && errors.membersAbsent}
+                  sx={{ gridColumn: "span 4" }}
+                />
+
+
+            {/*No Bacenta Meetings*/}
+                <TextField
+                  fullWidth
+                  variant="filled"
+                  label="No Bacenta Meetings"
+                  type="number"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.noBacentaMeeting}
+                  name="noBacentaMeeting"
+                  error={!!touched.noBacentaMeeting && !!errors.noBacentaMeeting}
+                  helperText={touched.noBacentaMeeting && errors.noBacentaMeeting}
                   sx={{ gridColumn: "span 4" }}
                 />
               </Box>
