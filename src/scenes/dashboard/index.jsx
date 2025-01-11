@@ -15,10 +15,15 @@ import LineChart from "../../components/LineChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
+import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  const [selected, setSelected] = useState(false);
+  const navigate = useNavigate(); // Initialize navigate hook
 
   // Fetch centers data
  const [center, setCenter] = useState([]);
@@ -146,6 +151,23 @@ const rows = [
   { id: 'Difference', adults: 123, keeplet: 167, total: 290 },
 ];
 
+  // Function to handle click and navigate to the next page
+  const handleNextPageClick = () => {
+    navigate('/centers'); // Navigate to '/centers' page
+  };
+
+  const handleZonePageClick = () => {
+    navigate('/zones'); // Navigate to '/centers' page
+  };
+
+  const handleBacentaPageClick = () => {
+    navigate('/bacentas'); // Navigate to '/centers' page
+  };
+
+  const handleAttenancePageClick = () => {
+    navigate('/attendance'); // Navigate to '/centers' page
+  };
+
  
   return (
     <Box m="20px">
@@ -178,11 +200,13 @@ const rows = [
       >
         {/* ROW 1 */}
         <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
+           gridColumn="span 3"
+           backgroundColor={colors.primary[400]}
+           display="flex"
+           alignItems="center"
+           justifyContent="center"
+           sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
+           onClick={handleNextPageClick} // Attach the click handler
         >
           <StatBox
             title={center.length}
@@ -191,7 +215,7 @@ const rows = [
             increase="+0%"
             icon={
               <CenterFocusStrongIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+                sx={{ color: colors.greenAccent[600], fontSize: '26px' }}
               />
             }
           />
@@ -202,6 +226,8 @@ const rows = [
           display="flex"
           alignItems="center"
           justifyContent="center"
+          sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
+          onClick={handleZonePageClick} // Attach the click handler
         >
           <StatBox
             title={zone.length}
@@ -221,6 +247,8 @@ const rows = [
           display="flex"
           alignItems="center"
           justifyContent="center"
+          sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
+          onClick={handleBacentaPageClick} // Attach the click handler
         >
           <StatBox
             title={bacenta.length}
@@ -310,6 +338,8 @@ const rows = [
             flexDirection="column"
             alignItems="center"
             mt="25px"
+            sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
+            onClick={handleAttenancePageClick} // Attach the click handler
           >
             <ProgressCircle 
             size="125" 

@@ -85,8 +85,8 @@ const Sidebar = () => {
                 alignItems="center"
                 ml="15px"
               >
-                <Typography variant="h3" color={colors.grey[100]}>
-                KAIPTC 
+                <Typography variant="h4" color={colors.grey[100]}>
+                KMWCI
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -100,23 +100,23 @@ const Sidebar = () => {
               <Box display="flex" justifyContent="center" alignItems="center">
                 <img
                   alt="profile-user"
-                  width="100px"
-                  height="100px"
+                  width="150px"
+                  height="200px"
                   src={ReactLogo}
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
               </Box>
               <Box textAlign="center">
                 <Typography
-                  variant="h2"
+                  variant="h3"
                   color={colors.grey[100]}
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
-                  Mike Dua
+                  Emmanuel Nterful
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  CFO Admin
+                  Bishop
                 </Typography>
               </Box>
             </Box>
