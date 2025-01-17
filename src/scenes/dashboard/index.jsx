@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
@@ -11,24 +10,31 @@ import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import Diversity1Icon from '@mui/icons-material/Diversity1';
 import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
-//import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
-  const [selected, setSelected] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check for mobile size
+  const [center, setCenter] = useState([]);
+  const [zone, setZone] = useState([]);
+  const [bacenta, setBacenta] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [membership, setMembership] = useState(422);
+  const [bacentaProgress, setBacentaProgress] = useState(0);
+  const [sundayAttendanceProgress, setSundayAttendanceProgress] = useState(0);
+  const [bacentaTarget, setBacentaTarget] = useState([]);
+  const [attendanceTarget, setAttendanceTarget] = useState([]);
+  const [membershipTarget, setMembershipTarget] = useState([]);
+  const [membershipProgress, setMembershipProgress] = useState([]);
+  const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
   const navigate = useNavigate(); // Initialize navigate hook
 
-  // Fetch centers data
- const [center, setCenter] = useState([]);
-
-  useEffect(() => {
+// Fetch centers data
+ useEffect(() => {
     const fetchCenter = async () => {
       try {
         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
@@ -42,8 +48,7 @@ const Dashboard = () => {
   }, []);
 
 
-   // Fetch zones data
- const [zone, setZone] = useState([]);
+ // Fetch zones data
 
  useEffect(() => {
    const fetchZone = async () => {
@@ -59,7 +64,6 @@ const Dashboard = () => {
  }, []);
 
    // Fetch bacentas data
-   const [bacenta, setBacenta] = useState([]);
 
    useEffect(() => {
      const fetchBacenta = async () => {
@@ -74,9 +78,7 @@ const Dashboard = () => {
      fetchBacenta();
    }, []);
 
-
     // Fetch attendance data
-    const [attendance, setAttendance] = useState([]);
 
     useEffect(() => {
       const fetchAttendance = async () => {
@@ -91,17 +93,7 @@ const Dashboard = () => {
       fetchAttendance();
     }, []);
 
-
 // CALCULATING THE PERCENTAGE ACHIEVED FOR BACENTA
-const [bacentaTarget, setBacentaTarget] = useState([]);
-const [attendanceTarget, setAttendanceTarget] = useState([]);
-const [membershipTarget, setMembershipTarget] = useState([]);
-const [membership, setMembership] = useState([]);
-const [membershipProgress, setMembershipProgress] = useState([]);
-
-const [bacentaProgress, setBacentaProgress] = useState([]);
-const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
-const [sundayAttendanceProgress, setSundayAttendanceProgress] = useState([]);
 
 useEffect(() => {
   const calculateProgress = () => {
@@ -133,48 +125,29 @@ useEffect(() => {
   calculateProgress();
 }, [bacenta]);  // Ensure this effect runs when `bacenta` changes
 
-  
- // Columns for DataGrid with editable fields
- const columns = [
+  const handleNextPageClick = () => navigate('/centers');
+  const handleZonePageClick = () => navigate('/zones');
+  const handleBacentaPageClick = () => navigate('/bacentas');
+  const handleAttenancePageClick = () => navigate('/attendance');
 
-  { field: "id", headerName: "Summary", editable: false },
-  { field: "adults", headerName: "Adults", flex: 1, editable: true },
-  { field: "keeplet", headerName: "Keeplets", flex: 1, editable: true },
-  { field: "total", headerName: "Total", flex: 1, editable: true },
-  
- 
-];
+  const columns = [
+    { field: "id", headerName: "Summary", editable: false },
+    { field: "adults", headerName: "Adults", flex: 1, editable: true },
+    { field: "keeplet", headerName: "Keeplets", flex: 1, editable: true },
+    { field: "total", headerName: "Total", flex: 1, editable: true },
+  ];
 
-const rows = [
-  { id:'Head Count', adults: 371, keeplet: 227, total: 598 },
-  { id: 'Center Data', adults: 248, keeplet: 60, total: 308 },
-  { id: 'Difference', adults: 123, keeplet: 167, total: 290 },
-];
+  const rows = [
+    { id: 'Head Count', adults: 371, keeplet: 227, total: 598 },
+    { id: 'Center Data', adults: 248, keeplet: 60, total: 308 },
+    { id: 'Difference', adults: 123, keeplet: 167, total: 290 },
+  ];
 
-  // Function to handle click and navigate to the next page
-  const handleNextPageClick = () => {
-    navigate('/centers'); // Navigate to '/centers' page
-  };
-
-  const handleZonePageClick = () => {
-    navigate('/zones'); // Navigate to '/centers' page
-  };
-
-  const handleBacentaPageClick = () => {
-    navigate('/bacentas'); // Navigate to '/centers' page
-  };
-
-  const handleAttenancePageClick = () => {
-    navigate('/attendance'); // Navigate to '/centers' page
-  };
-
- 
   return (
     <Box m="20px">
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-
         <Box>
           <Button
             sx={{
@@ -194,76 +167,64 @@ const rows = [
       {/* GRID & CHARTS */}
       <Box
         display="grid"
-        gridTemplateColumns="repeat(12, 1fr)"
+        gridTemplateColumns={isMobile ? "repeat(4, 1fr)" : "repeat(12, 1fr)"}
         gridAutoRows="140px"
         gap="20px"
       >
         {/* ROW 1 */}
         <Box
-           gridColumn="span 3"
-           backgroundColor={colors.primary[400]}
-           display="flex"
-           alignItems="center"
-           justifyContent="center"
-           sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
-           onClick={handleNextPageClick} // Attach the click handler
+          gridColumn={isMobile ? "span 4" : "span 3"}
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ cursor: 'pointer' }}
+          onClick={handleNextPageClick}
         >
           <StatBox
             title={center.length}
             subtitle="No of Centers"
             progress="0.75"
             increase="+0%"
-            icon={
-              <CenterFocusStrongIcon
-                sx={{ color: colors.greenAccent[600], fontSize: '26px' }}
-              />
-            }
+            icon={<CenterFocusStrongIcon sx={{ color: colors.greenAccent[600], fontSize: '26px' }} />}
           />
         </Box>
         <Box
-          gridColumn="span 3"
+          gridColumn={isMobile ? "span 4" : "span 3"}
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
           justifyContent="center"
-          sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
-          onClick={handleZonePageClick} // Attach the click handler
+          sx={{ cursor: 'pointer' }}
+          onClick={handleZonePageClick}
         >
           <StatBox
             title={zone.length}
             subtitle="No of Zones"
             progress="0.50"
             increase="+21%"
-            icon={
-              <GpsFixedIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            icon={<GpsFixedIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
           />
         </Box>
         <Box
-          gridColumn="span 3"
+          gridColumn={isMobile ? "span 4" : "span 3"}
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
           justifyContent="center"
-          sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
-          onClick={handleBacentaPageClick} // Attach the click handler
+          sx={{ cursor: 'pointer' }}
+          onClick={handleBacentaPageClick}
         >
           <StatBox
             title={bacenta.length}
             subtitle="No of Bacentas"
-            progress={bacentaProgress/100}
+            progress={bacentaProgress / 100}
             increase={`${bacentaProgress}%`}
-            icon={
-              <WorkspacesIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            icon={<WorkspacesIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
           />
         </Box>
         <Box
-          gridColumn="span 3"
+          gridColumn={isMobile ? "span 4" : "span 3"}
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
@@ -273,49 +234,25 @@ const rows = [
             title={membership}
             subtitle="Total Membership"
             progress={membershipProgress}
-            increase={`${membershipProgress*100}%`}
-            icon={
-              <Diversity1Icon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            increase={`${membershipProgress * 100}%`}
+            icon={<Diversity1Icon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
           />
         </Box>
 
         {/* ROW 2 */}
-        <Box
-          gridColumn="span 8"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
+        <Box gridColumn={isMobile ? "span 4" : "span 8"} gridRow="span 2" backgroundColor={colors.primary[400]}>
+          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
             <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-              >
+              <Typography variant="h5" fontWeight="600" color={colors.grey[100]}>
                 Sunday Attendance
               </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
+              <Typography variant="h3" fontWeight="bold" color={colors.greenAccent[500]}>
                 422
               </Typography>
             </Box>
             <Box>
               <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
+                <DownloadOutlinedIcon sx={{ fontSize: "26px", color: colors.greenAccent[500] }} />
               </IconButton>
             </Box>
           </Box>
@@ -323,116 +260,49 @@ const rows = [
             <LineChart isDashboard={true} />
           </Box>
         </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          p="30px"
-        >
 
-           <Typography variant="h5" fontWeight="600" alignItems="center">
-           Overall Sunday Attendance
+        <Box gridColumn={isMobile ? "span 4" : "span 4"} gridRow="span 2" backgroundColor={colors.primary[400]} p="30px">
+          <Typography variant="h5" fontWeight="600" alignItems="center">
+            Overall Sunday Attendance
           </Typography>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            mt="25px"
-            sx={{ cursor: 'pointer' }} // Add cursor style to indicate it's clickable
-            onClick={handleAttenancePageClick} // Attach the click handler
-          >
-            <ProgressCircle 
-            size="125" 
-            progress={sundayAttendanceProgress / membership}
-            
-            />
-           
-            <Typography 
-            variant="h3"
-            color={colors.greenAccent[500]}
-            sx={{ mt: "15px" }}
-            >
+          <Box display="flex" flexDirection="column" alignItems="center" mt="25px" sx={{ cursor: 'pointer' }} onClick={handleAttenancePageClick}>
+            <ProgressCircle size="125" progress={sundayAttendanceProgress / membership} />
+            <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
               {((sundayAttendanceProgress / membership) * 100).toFixed(2)}%
-
-
             </Typography>
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
+            <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
               {sundayAttendanceProgress} attendance recorded
             </Typography>
           </Box>
         </Box>
 
         {/* ROW 3 */}
-        <Box
-          gridColumn="span 3"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          p="30px"
-        >
+        <Box gridColumn={isMobile ? "span 4" : "span 3"} gridRow="span 2" backgroundColor={colors.primary[400]} p="30px">
           <Typography variant="h5" fontWeight="600" alignItems="center">
             Bacenta Meeting Attendance
           </Typography>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            mt="25px"
-          >
-            <ProgressCircle 
-            size="125" 
-            progress={bacentaAttendanceProgress / membership}
-            
-            />
-           
-            <Typography 
-            variant="h3"
-            color={colors.greenAccent[500]}
-            sx={{ mt: "15px" }}
-            >
+          <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
+            <ProgressCircle size="125" progress={bacentaAttendanceProgress / membership} />
+            <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
               {((bacentaAttendanceProgress / membership) * 100).toFixed(2)}%
-
-
             </Typography>
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
+            <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
               {bacentaAttendanceProgress} attendance recorded
             </Typography>
           </Box>
         </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
+
+        <Box gridColumn={isMobile ? "span 4" : "span 4"} gridRow="span 2" backgroundColor={colors.primary[400]}>
+          <Typography variant="h5" fontWeight="600" sx={{ padding: "30px 30px 0 30px" }}>
             Centers Attendance
           </Typography>
           <Box height="250px" mt="-20px">
             <BarChart isDashboard={true} />
           </Box>
         </Box>
-        <Box
-          gridColumn="span 5"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          padding="30px"
-        >
-         <DataGrid
-      rows={rows} // The rows data
-      columns={columns} // The column definitions
-      
-    />
+
+        <Box gridColumn={isMobile ? "span 4" : "span 5"} gridRow="span 2" backgroundColor={colors.primary[400]} padding="30px">
+          <DataGrid rows={rows} columns={columns} />
         </Box>
       </Box>
     </Box>
@@ -440,4 +310,3 @@ const rows = [
 };
 
 export default Dashboard;
-

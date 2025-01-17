@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
@@ -8,17 +8,8 @@ import ReactLogo from '../../components/assets/images/react.png';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import SupplierOutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import AddAlertOutlinedIcon from '@mui/icons-material/AddAlertOutlined';
-import PurchaseOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
-import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined';
-import ReportsOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsApplicationsOutlined';
-import UsersOutlinedIcon from '@mui/icons-material/GroupAddOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -44,14 +35,26 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
 
+  // Use MUI's useMediaQuery hook to detect screen size
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // If the screen is small (mobile), collapse the sidebar by default
+  useEffect(() => {
+    if (isMobile) {
+      setIsCollapsed(true);
+    } else {
+      setIsCollapsed(false);
+    }
+  }, [isMobile]);
+
   return (
     <Box
       sx={{
         display: "flex",
-        height: "200vh", // Full page height
+        height: "100vh", // Full page height
         "& .pro-sidebar-inner": {
           background: `${colors.primary[400]} !important`,
-          height: "200vh !important", // Sidebar takes full height of the page
+          height: "100vh !important", // Sidebar takes full height of the page
         },
         "& .pro-icon-wrapper": {
           backgroundColor: "transparent !important",
@@ -86,7 +89,7 @@ const Sidebar = () => {
                 ml="15px"
               >
                 <Typography variant="h4" color={colors.grey[100]}>
-                KMWCI
+                  KMWCI
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -146,15 +149,8 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-             {/* <Item
-              title="Targets"
-              to="/add-target"
-              icon={<InventoryOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
 
-<Typography
+            <Typography
               variant="h6"
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
@@ -169,7 +165,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
 
-<Typography
+            <Typography
               variant="h6"
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
@@ -190,93 +186,6 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            {/* <Item
-              title="Suppliers"
-              to="/suppliers"
-              icon={<SupplierOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Item
-              title="Low Stock Alert"
-              to="/alerts"
-              icon={<AddAlertOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Item
-              title="Purchase Order"
-              to="/purchase-orders"
-              icon={<PurchaseOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-
-            {/* <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              UserS & Management
-            </Typography> */}
-            {/* <Item
-              title="Users"
-              to="/users"
-              icon={<UsersOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Item
-              title="Department"
-              to="/departments"
-              icon={<FilterListOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Item
-              title="Staff"
-              to="/staff"
-              icon={<GroupsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-
-            {/* <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Reports & Settings
-            </Typography> */}
-            {/* <Item
-              title="Report Generator"
-              to="/reports"
-              icon={<ReportsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Item
-              title="General Settings"
-              to="/settings"
-              icon={<SettingsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
-            {/* <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              _____________________
-            </Typography> */}
-
-            {/* <Item
-              title="LOGOUT"
-              to="/users"
-              icon={<LogoutOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
           </Box>
         </Menu>
       </ProSidebar>
@@ -285,4 +194,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-

@@ -168,26 +168,63 @@ export const themeSettings = (mode) => {
       h1: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 40,
+        // Access breakpoints directly using the theme object
+        "@media (max-width:960px)": {
+          fontSize: 32,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 24,
+        },
       },
       h2: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 32,
+        "@media (max-width:960px)": {
+          fontSize: 28,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 24,
+        },
       },
       h3: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 24,
+        "@media (max-width:960px)": {
+          fontSize: 20,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 18,
+        },
       },
       h4: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 20,
+        "@media (max-width:960px)": {
+          fontSize: 18,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 16,
+        },
       },
       h5: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 16,
+        "@media (max-width:960px)": {
+          fontSize: 14,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 12,
+        },
       },
       h6: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 14,
+        "@media (max-width:960px)": {
+          fontSize: 12,
+        },
+        "@media (max-width:600px)": {
+          fontSize: 10,
+        },
       },
     },
   };
@@ -209,6 +246,7 @@ export const useMode = () => {
     []
   );
 
+  // Create the theme without passing 'theme' explicitly
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
   return [theme, colorMode];
 };
