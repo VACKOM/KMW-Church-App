@@ -1,57 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-
-
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Validation Schema
 const bacentaSchema = yup.object().shape({
- 
-    bacentaName: yup.string().required("Bacenta name is required"),
-    bacentaLeader: yup.string().required("Bacenta Leader's name is required"),
-    // zoneName: yup.string().required("Zone should be selected"),
-    bacentaID: yup.string(),
-    bacentaLocation: yup.string().required("Bacenta's Location is required"),
-    bacentaContact: yup.string().required("Bacenta contact is required"),
-    bacentaDateStarted: yup.string().required("Bacenta date is required"),
-    bacentaEmail: yup.string().required("Bacenta email is required"),
+  bacentaName: yup.string().required("Bacenta name is required"),
+  bacentaLeader: yup.string().required("Bacenta Leader's name is required"),
+  bacentaID: yup.string(),
+  bacentaLocation: yup.string().required("Bacenta's Location is required"),
+  bacentaContact: yup.string().required("Bacenta contact is required"),
+  bacentaDateStarted: yup.string().required("Bacenta date is required"),
+  bacentaEmail: yup.string().required("Bacenta email is required"),
 });
 
 const Bacenta = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)"); 
+  const isNonMobile = useMediaQuery("(min-width:600px)");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { foundCenter: receivedCenter } = location.state || {}; // Destructure foundCenter
+  const role = localStorage.getItem('role');
+  const userZone = localStorage.getItem('zone');
 
-  // State hooks to hold data
   const [zone, setZone] = useState([]);
   const [center, setCenter] = useState([]);
-  const navigate = useNavigate(); // Initialize the navigate function
+  const [foundedCenter, setFoundedCenter] = useState();
+  const [foundedZone, setFoundedZone] = useState([]);
+  const [foundZone, setFoundZone] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);  // Loading state to prevent form submission before data is ready
 
-  // Fetch Zones data
+  // Fetch zones data and filter by center
   useEffect(() => {
     const fetchZones = async () => {
       try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-        setZone(response.data); // Adjust according to your API response
+        const response = await axios.get("http://localhost:8080/api/zones/");
+        setZone(response.data);
+        setFoundedZone(response.data.filter(item => item.center === receivedCenter.centerName));
+
+        setFoundZone(response.data.find(item => item._id === userZone)?.zoneName || ''); // Get the name, or default to an empty string
+
+
+        // If there are zones that match the center, set the first one as the foundZone
+        //setFoundedZone(filteredZones.length > 0 ? filteredZones[0].zoneName : '');
+        setIsLoading(false); // Set loading to false once data is fetched
       } catch (error) {
         console.error("Error fetching zone:", error);
       }
     };
     fetchZones();
-  }, []);
+  }, [receivedCenter]);
 
-   // Fetch Center data
-   useEffect(() => {
+  // Fetch center data
+  useEffect(() => {
     const fetchCenters = async () => {
       try {
         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
         setCenter(response.data); // Adjust according to your API response
-        console.log(response.data);
       } catch (error) {
         console.error("Error fetching center:", error);
       }
@@ -59,32 +67,32 @@ const Bacenta = () => {
     fetchCenters();
   }, []);
 
+  // Ensure that savedZone is correctly initialized (or fallback to empty string)
+  const savedCenter = receivedCenter ? receivedCenter.centerName : '';
+ // const savedZone = foundedZone || ''; // Fallback to empty string if foundedZone is undefined
+ const savedZone = foundZone || ''; // Fallback to empty string if foundedZone is undefined
 
-
-
-  // SKU generation logic (bacenta, random number)
-  const generateID = (center, zone) => {
-    const centerPrefix = center.substring(0, 2).toUpperCase();
-    const zonePrefix = zone.substring(0, 2).toUpperCase();
-    const randomNum = Math.floor(Math.random() * 1000);
-    return `BAC/${zonePrefix}/${centerPrefix}/${randomNum}`;
-  };
+  // Generate Bacenta ID
+  const randomNum = Math.floor(Math.random() * 1000);
+  const generateID = `BAC/${randomNum}`;
 
   // Handle form submission
   const handleSubmit = async (values) => {
-   
+    console.log(values);
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/bacentas/', values);
       alert('Bacenta registered successfully!');
-      
       navigate("/bacentas");
     } catch (error) {
-      console.error('There was an error registering the bacenta!', error); 
+      console.error('There was an error registering the bacenta!', error);
       alert('Error registering bacenta');
     }
   };
 
- 
+  // Ensure that the form doesn't render until the zone data has been fetched
+  if (isLoading) {
+    return <div>Loading...</div>;  // Loading screen while waiting for data
+  }
 
   return (
     <Box m="20px">
@@ -94,14 +102,13 @@ const Bacenta = () => {
         initialValues={{
           bacentaName: '',
           bacentaLeader: '',
-          zone:'',
-          center:'',
-          bacentaID: '',
-          bacentaLocation:'',
+          zone: role === "zone" ? savedZone : '', // Conditional value based on the role
+          center: savedCenter,
+          bacentaID: generateID,
+          bacentaLocation: '',
           bacentaContact: '',
-          bacentaDateStarted:'',
-          bacentaEmail: '',       
-
+          bacentaDateStarted: '',
+          bacentaEmail: '',
         }}
         validationSchema={bacentaSchema}
         onSubmit={handleSubmit}
@@ -140,7 +147,7 @@ const Bacenta = () => {
               />
 
                {/* Center Select */}
-               <FormControl
+               {/* <FormControl
                 variant="filled"
                 fullWidth
                 sx={{ gridColumn: "span 4" }}
@@ -171,41 +178,45 @@ const Bacenta = () => {
                   ))}
                 </Select>
                 <FormHelperText>{touched.center && errors.center}</FormHelperText>
-              </FormControl>
+              </FormControl> */}
 
-               {/* Zone Select */}
-               <FormControl
-                variant="filled"
-                fullWidth
-                sx={{ gridColumn: "span 4" }}
-                error={!!touched.zone && !!errors.zone}
-              >
-                <InputLabel id="zone-label">Zone</InputLabel>
-                <Select
-                  labelId="zone-label"
-                  id="zone"
-                  value={values.zone}
-                  onChange={(e) => {
-                    const selectedZone = e.target.value;
-                    setFieldValue('zone', selectedZone);
-                    const sku = generateID( values.center, selectedZone);
-                    setFieldValue('bacentaID', sku);
-                  }}
-                  onBlur={handleBlur}
-                  name="zone"
-                  label="Zone"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {zone.map((cat) => (
-                    <MenuItem key={cat._id} value={cat.zoneName}>
-                      {cat.zoneName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{touched.zone && errors.zone}</FormHelperText>
-              </FormControl>
+               
+              {/* Zone Select */}
+{role === "center" && (
+  <FormControl
+    variant="filled"
+    fullWidth
+    sx={{ gridColumn: "span 4" }}
+    error={!!touched.zone && !!errors.zone}
+  >
+    <InputLabel id="zone-label">Zone</InputLabel>
+    <Select
+      labelId="zone-label"
+      id="zone"
+      value={values.zone}
+      onChange={(e) => {
+        const selectedZone = e.target.value;
+        setFieldValue('zone', selectedZone);
+        // const sku = generateID(values.center, selectedZone);
+        // setFieldValue('bacentaID', sku);
+      }}
+      onBlur={handleBlur}
+      name="zone"
+      label="Zone"
+    >
+      <MenuItem value="">
+        <em>None</em>
+      </MenuItem>
+      {foundedZone.map((cat) => (
+        <MenuItem key={cat._id} value={cat.zoneName}>
+          {cat.zoneName}
+        </MenuItem>
+      ))}
+    </Select>
+    <FormHelperText>{touched.zone && errors.zone}</FormHelperText>
+  </FormControl>
+)}
+
 
 
                 {/* Bacenta Name */}

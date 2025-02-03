@@ -4,19 +4,74 @@ import { tokens } from "../../theme";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
+import { useNavigate , useLocation } from "react-router-dom"; // Import the useNavigate hook
 import Topbar from "../global/TopBar";  // Import your Topbar component
 
 const Bacentas = ({}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [centers, setCenters] = useState([]);
+  const [centerName,setCenterName] = useState([]);
+  const [zones, setZones] = useState([]);
   const [bacentas, setBacentas] = useState([]);
   const [bacentasList, setBacentasList] = useState([]);
+  const[isRoleMatch,setIsRoleMatch] = useState([]);
   const [loading, setLoading] = useState(true); // Add a loading state
   const [error, setError] = useState(null); // Add an error state
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
+  const location = useLocation();
+  const [foundCenter, setFoundCenter] = useState([]);
+  const [foundZone, setFoundZone] = useState([]);
   
+  const userRole = localStorage.getItem('role');
+
+  // Fetch centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/centers/');
+        setCenters(response.data);
+        setFoundCenter(response.data.find(item => item._id === localStorage.getItem('center'))); // Set foundCenter
+        setLoading(false);  // Data is loaded
+       
+      } catch (error) {
+        console.error('Error fetching centers:', error);
+        setError('Failed to load centers or no centers available');
+        setLoading(false);  // Data loading is done, but there was an error
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  console.log(foundCenter)
+
+  // Fetch zone data based on center
+  useEffect(() => {
+    if (foundCenter?.centerName) {
+      const fetchZone = async () => {
+        try {
+          const response = await axios.get("http://localhost:8080/api/zones/");
+          setZones(response.data);
+          // Filter zones based on the centerName
+          const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
+          setFoundZone(filteredZones); // Set zones that match the centerName
+        } catch (error) {
+          setError("Error fetching zones");
+          console.error("Error fetching zone:", error);
+        }
+      };
+      fetchZone();
+    }
+  }, [foundCenter]); // Trigger fetchZone when foundCenter changes
+
+  // Set loading state to false when data is loaded
+  useEffect(() => {
+    if (foundZone && foundZone.length > 0) {
+      setLoading(false); // Data has been fetched
+    }
+  }, [foundZone]);
+
 
   // Fetch bacentas
   useEffect(() => {
@@ -43,14 +98,15 @@ const Bacentas = ({}) => {
           return {
             ID: bacenta._id,
             id: bacenta.bacentaID, // Ensure each row has a unique 'id' property
-            //bacentaId: bacenta.bacentaId,
+            bacentaId: bacenta.bacentaId,
             bacentaName: bacenta.bacentaName,
             bacentaLeader: bacenta.bacentaLeader,
             bacentaLocation:bacenta.bacentaLocation,
             bacentaContact: bacenta.bacentaContact,
             bacentaEmail: bacenta.bacentaEmail,
             bacentaDateStarted: bacenta.bacentaDateStarted,
-            zone: bacenta.zone
+            zone: bacenta.zone,
+            center:bacenta.center
             
           };
         });
@@ -73,28 +129,79 @@ const Bacentas = ({}) => {
 
   // Button Add New Bacenta click handler
   const handleAddButtonClick = () => {
-    navigate("/add-bacenta");
+    console.log(foundCenter.center)
+    navigate("/add-bacenta" , { state: { foundCenter } });
+
   };
 
   const handleSearch = (query) => {
     setSearchQuery(query); // Update the search query state 
   };
 
-  // Filter bacentas based on the search query
   const filteredBacentas = bacentasList.filter(bacenta => {
     const query = searchQuery.toLowerCase(); // Normalize the search query
+  
+    // Check if userRole is "center" and filter accordingly
+    if (userRole === "center") {
+      const centerId = localStorage.getItem('center'); // Get the centerId from local storage
+      
+      // Find the center based on the centerId
+      const searchCenter = centers.find(center => center._id === centerId); // Find the center object
+      
+      if (!searchCenter) return false; // If no matching center, exclude this bacenta
+      
+      const centerName = searchCenter.centerName.toLowerCase(); // Get the centerName from the center object
+      
+      // Only include bacentas belonging to this center
+      if (bacenta.center.toLowerCase() !== centerName) {
+        return false;
+      }
+    }
+    else if (userRole === "zone") {
+      const zoneId = localStorage.getItem('zone'); // Get the centerId from local storage
+      
+      // Find the center based on the centerId
+      const searchZone = zones.find(zone => zone._id === zoneId); // Find the center object
+      
+      if (!searchZone) return false; // If no matching center, exclude this bacenta
+      
+      const zoneName = searchZone.zoneName.toLowerCase(); // Get the centerName from the center object
+      
+      // Only include bacentas belonging to this center
+      if (bacenta.zone.toLowerCase() !== zoneName) {
+        return false;
+      }
+    }
+
+    else if (userRole === "bacenta") {
+      const bacentaId = localStorage.getItem('bacenta'); // Get the centerId from local storage
+      
+      // Find the center based on the centerId
+      const searchBacenta = bacentas.find(bacenta => bacenta._id === bacentaId); // Find the center object
+      
+      if (!searchBacenta) return false; // If no matching center, exclude this bacenta
+      
+      const bacentaName = searchBacenta.bacentaName.toLowerCase(); // Get the centerName from the center object
+      
+      // Only include bacentas belonging to this center
+      if (bacenta.bacentaName.toLowerCase() !== bacentaName) {
+        return false;
+      }
+    }
+  
+    // Now filter by search query in relevant fields
     return (
       bacenta.bacentaName.toLowerCase().includes(query) ||
       bacenta.bacentaLeader.toLowerCase().includes(query) ||
       bacenta.bacentaContact.toLowerCase().includes(query) ||
       bacenta.bacentaEmail.toLowerCase().includes(query) ||
       bacenta.bacentaLocation.toLowerCase().includes(query) ||
-      bacenta.bacentaDateStarted.includes(query) ||
-      bacenta.zone.toLowerCase().includes(query)
-     
+      bacenta.bacentaDateStarted.includes(query)
+      
     );
-    
   });
+  
+  
  
 
 //   // Handle row update (when user types into the grid)
@@ -118,7 +225,6 @@ const Bacentas = ({}) => {
   const columns = [
     { field: "id", headerName: "Bacenta ID", editable: false },
     { field: "bacentaName", headerName: "Bacenta Name", flex: 1, editable: true },
-    { field: "zone", headerName: "Bacenta's Zone", flex: 1, editable: true },
     { field: "bacentaLeader", headerName: "Bacenta Leader", flex: 1, editable: true },
     { field: "bacentaContact", headerName: "Bacenta Contact", flex: 1, editable: true },
     { field: "bacentaLocation", headerName: "Bacenta Location", editable: true },

@@ -5,7 +5,7 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
+import { useNavigate, useLocation } from "react-router-dom"; // Import the useNavigate hook
 
 // Validation Schema
 const zoneSchema = yup.object().shape({
@@ -20,9 +20,24 @@ const zoneSchema = yup.object().shape({
 const Zone = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
 
+
+
   // State hooks to hold data
   const [center, setCenter] = useState([]);
+  const [foundedCenter, setFoundedCenter] = useState([]);
   const navigate = useNavigate(); // Initialize the navigate function
+
+  // Correct way to use useLocation
+  const location = useLocation();
+  const { foundCenter: receivedCenter } = location.state || {}; // Destructure foundCenter from location.state, or default to empty object
+ 
+console.log(receivedCenter)
+  useEffect(() => {
+    if (receivedCenter) {
+      setFoundedCenter(receivedCenter.centerName); // Set the foundCenter when it's available
+      
+    }
+  }, [receivedCenter]);
 
   // Fetch centers data
   useEffect(() => {
@@ -38,19 +53,21 @@ const Zone = () => {
   }, []);
 
 
+const savedCenter = foundedCenter;
+console.log(savedCenter)
+
+ // SKU generation logic (zone, random number)
+
+const randomNum = Math.floor(Math.random() * 1000);
+const generateID = `ZON/${randomNum}`;
 
 
-  // SKU generation logic (zone, random number)
-  const generateID = (center) => {
-    const centerPrefix = center.substring(0, 2).toUpperCase();
-    const randomNum = Math.floor(Math.random() * 1000);
-    return `ZON/${centerPrefix}/${randomNum}`;
-  };
 
   // Handle form submission
   const handleSubmit = async (values) => {
+    console.log('Form Data:', values); // Log the data being sent
     try {
-      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/zones/', values);
+      const response = await axios.post('http://localhost:8080/api/zones/', values);
       alert('Zone registered successfully!');
       console.log(response.data);
       navigate("/zones");
@@ -66,12 +83,12 @@ const Zone = () => {
 
       <Formik
         initialValues={{
-          zoneID: '',
+          zoneID: generateID,
           zoneName: '',
           zoneLeader: '',
           zoneContact: '',
           zoneEmail: '',
-          center: ''
+          center: savedCenter
          
 
         }}
@@ -110,7 +127,7 @@ const Zone = () => {
                 disabled
               />
 
-                  {/* Center Select */}
+                  {/* Center Select
                   <FormControl
                 variant="filled"
                 fullWidth
@@ -142,7 +159,7 @@ const Zone = () => {
                   ))}
                 </Select>
                 <FormHelperText>{touched.center && errors.center}</FormHelperText>
-              </FormControl>
+              </FormControl> */}
 
               {/* Zone Name */}
               <TextField
