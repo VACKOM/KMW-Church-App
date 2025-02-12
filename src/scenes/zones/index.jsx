@@ -42,7 +42,7 @@ const Zones = () => {
     if (foundCenter?.centerName) {
       const fetchZone = async () => {
         try {
-          const response = await axios.get("http://localhost:8080/api/zones/");
+          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
           setZone(response.data);
           // Filter zones based on the centerName
           const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);

@@ -31,7 +31,6 @@ const Zone = () => {
   const location = useLocation();
   const { foundCenter: receivedCenter } = location.state || {}; // Destructure foundCenter from location.state, or default to empty object
  
-console.log(receivedCenter)
   useEffect(() => {
     if (receivedCenter) {
       setFoundedCenter(receivedCenter.centerName); // Set the foundCenter when it's available
@@ -54,7 +53,6 @@ console.log(receivedCenter)
 
 
 const savedCenter = foundedCenter;
-console.log(savedCenter)
 
  // SKU generation logic (zone, random number)
 
@@ -65,11 +63,9 @@ const generateID = `ZON/${randomNum}`;
 
   // Handle form submission
   const handleSubmit = async (values) => {
-    console.log('Form Data:', values); // Log the data being sent
     try {
-      const response = await axios.post('http://localhost:8080/api/zones/', values);
+      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/zones/', values);
       alert('Zone registered successfully!');
-      console.log(response.data);
       navigate("/zones");
     } catch (error) {
       console.error('There was an error registering the zone!', error);

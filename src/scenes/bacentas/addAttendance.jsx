@@ -93,7 +93,6 @@ const addAttendance = () => {
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/attendances/', values);
       alert('Attendance filled successfully!');
-      console.log(response.data);
       navigate("/attendance");
     } catch (error) {
       console.error('There was an error submitting the attendance form!', error); 

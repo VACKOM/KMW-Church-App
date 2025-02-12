@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
+import { useAuth } from '../../context/AuthContext';
 //import UserPicture from '../../components/assets/images/female.jpg';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
@@ -19,7 +21,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ZoneOutlinedIcon from '@mui/icons-material/Grain';
 
 
-const Item = ({ title, to, icon, selected, setSelected }) => {
+const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   return (
@@ -28,7 +30,10 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
       style={{
         color: colors.grey[100],
       }}
-      onClick={() => setSelected(title)}
+      onClick={(e) => {
+        setSelected(title); // Set the selected state
+        if (onClick) onClick(e); // Call onClick handler if it's passed in
+      }}
       icon={icon}
     >
       <Typography>{title}</Typography>
@@ -52,9 +57,9 @@ const Sidebar = ({ userRole }) => {
   const zoneId = localStorage.getItem('zone');
   const centerId = localStorage.getItem('center');
   const bacentaId = localStorage.getItem('bacenta');
-
+  const navigate = useNavigate(); // Get the navigate function
   const role = localStorage.getItem('role');
-
+  const { logout } = useAuth();  // Accessing logout function from context
   
 
   // Fetch User data
@@ -62,7 +67,7 @@ const Sidebar = ({ userRole }) => {
   useEffect(() => {
     const fetchUser= async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/users/${userId}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/${userId}`);
         setUser(response.data); // Adjust according to your API response
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -78,7 +83,7 @@ const Sidebar = ({ userRole }) => {
   useEffect(() => {
     const fetchZone= async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/zones/${zoneId}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/zones/${zoneId}`);
         setZone(response.data); // Adjust according to your API response
         
       } catch (error) {
@@ -93,7 +98,7 @@ const Sidebar = ({ userRole }) => {
   useEffect(() => {
     const fetchCenter= async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/centers/${centerId}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/centers/${centerId}`);
         setCenter(response.data); // Adjust according to your API response
         
       } catch (error) {
@@ -108,7 +113,7 @@ const Sidebar = ({ userRole }) => {
    useEffect(() => {
     const fetchBacenta= async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/bacentas/${bacentaId}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/bacentas/${bacentaId}`);
         setBacenta(response.data); // Adjust according to your API response
         
       } catch (error) {
@@ -130,6 +135,28 @@ const UserPicture = user.profileImagePath// Example URL from the database';
       setIsCollapsed(false);
     }
   }, [isMobile]);
+
+  // To handle logout---------------
+
+  const handleLogout = async () => {
+   
+    try {
+      
+      // Call the backend logout route to clear any server-side sessions or tokens.
+      await axios.post('https://church-management-system-39vg.onrender.com/api/auth/logout'); // Replace with your logout route
+
+      // Remove the token or session from localStorage or sessionStorage
+      localStorage.removeItem('token'); // Or sessionStorage.removeItem('token'), depending on where you store it
+       
+      // Optionally, clear any other authentication-related data stored in the app
+      // localStorage.removeItem('userData');
+
+      // Redirect to the login page after logout
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
     <Box
@@ -192,7 +219,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
             <>
               <Item
                 title="Dashboard"
-                to="/"
+                to="/dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -214,7 +241,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
             <>
               <Item
                 title="Dashboard"
-                to="/"
+                to="/dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -263,7 +290,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
           )}
               <Item
                 title="Dashboard"
-                to="/"
+                to="/dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -379,6 +406,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
                 icon={<LogoutIcon />}
                 selected={selected}
                 setSelected={setSelected}
+                onClick={() => logout()} // Pass the function reference here
               />
               {/* Add user-specific items */}
             </>
@@ -420,7 +448,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
           )}
               <Item
                 title="Dashboard"
-                to="/"
+                to="/center-dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -509,11 +537,11 @@ const UserPicture = user.profileImagePath// Example URL from the database';
               _________________________________________
           
               <Item
-                title="Logout"
-                to="/login"
-                icon={<LogoutIcon />}
-                selected={selected}
-                setSelected={setSelected}
+               title="Logout"
+               icon={<LogoutIcon />}
+               selected={selected}
+               setSelected={setSelected}
+               onClick={() => logout()} // Pass the function reference here
               />
               {/* Add user-specific items */}
             </>
@@ -556,7 +584,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
           )}
               <Item
                 title="Dashboard"
-                to="/"
+                to="/zone-dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -635,6 +663,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
                 icon={<LogoutIcon />}
                 selected={selected}
                 setSelected={setSelected}
+                onClick={() => logout()} // Pass the function reference here
               />
               
               {/* Add user-specific items */}
@@ -677,7 +706,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
           )}
               <Item
                 title="Dashboard"
-                to="/"
+                to="/bacenta-dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
@@ -742,6 +771,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
                 icon={<LogoutIcon />}
                 selected={selected}
                 setSelected={setSelected}
+                onClick={() => logout()} // Pass the function reference here
               />
               {/* Add user-specific items */}
             </>

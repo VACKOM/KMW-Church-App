@@ -14,6 +14,7 @@ import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import { AuthProvider, useAuth } from '../../context/AuthContext'; // Auth context
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -32,6 +33,28 @@ const Dashboard = () => {
   const [membershipProgress, setMembershipProgress] = useState([]);
   const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
   const navigate = useNavigate(); // Initialize navigate hook
+  const { user } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  //Checking for user Authentication
+    const role = localStorage.getItem('role');
+    const userCenter = localStorage.getItem('center');
+    
+      useEffect(() => {
+        if (!user) {
+          // Redirect to login if no user is found
+          navigate('/login');
+          setIsAuthenticated(false);
+        } else if (role !== 'administrator') {
+          navigate('/unauthorized');
+          setIsAuthenticated(false);
+        } else {
+          // User exists and has the required permission, so continue normal operation
+          setIsAuthenticated(true);
+          // Perform additional logic if needed
+        }
+      }, [user, navigate]);
+  
 
 // Fetch centers data
  useEffect(() => {

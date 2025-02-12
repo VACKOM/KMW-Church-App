@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Input } from "@mui/material";
+import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText, Input, Snackbar } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
 import { useNavigate, useLocation } from "react-router-dom";
+import MuiAlert from '@mui/material/Alert';
 
 // Validation Schema
 const UserSchema = yup.object().shape({
+  firstName: yup.string().required("First Name is required"),
+  lastName: yup.string().required("Last Name is required"),
   username: yup.string().required("Username is required"),
   email: yup.string().required("Email is required"),
+  userContact: yup.string().required("User Contact is required"),
   role: yup.string().required("Role is required"),
   center: yup.string().required("Center is required"),
   zone: yup.string().required("Zone is required"),
@@ -23,80 +27,94 @@ const User = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const role = localStorage.getItem('role');
+  
   const [bacenta, setBacenta] = useState([]);
   const [zone, setZone] = useState([]);
   const [center, setCenter] = useState([]);
-  const [foundCenter, setFoundCenter] = useState();
-  const [foundZone, setFoundZone] = useState([]);
-  const [foundBacenta, setFoundBacenta] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);  // Loading state to prevent form submission before data is ready
+
   const [centerID, setCenterID] = useState();
   const [zoneID, setZoneID] = useState([]);
   const [bacentaID, setBacentaID] = useState();
+
+  const [foundCenter, setFoundCenter] = useState();
+  const [foundZone, setFoundZone] = useState([]);
+  const [foundBacenta, setFoundBacenta] = useState([]);
+
+  
+  // Loading states for each resource
+  const [loadingZones, setLoadingZones] = useState(true);
+  const [loadingCenters, setLoadingCenters] = useState(true);
+  const [loadingBacentas, setLoadingBacentas] = useState(true);
+
   const [profileImage, setProfileImage] = useState(null);  // State to store the image file
+  const [openSnackbar, setOpenSnackbar] = useState(false);  // Snackbar for error display
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  // Fetch zones data and filter by center
+  // Snackbar Alert
+  const Alert = React.forwardRef(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+  });
+
+  // Fetch all data (zones, centers, bacentas)
   useEffect(() => {
-    const fetchZones = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/zones/");
-        setZone(response.data);
-        setIsLoading(false); // Set loading to false once data is fetched
+        // Start loading each resource
+        setLoadingZones(true);
+        setLoadingCenters(true);
+        setLoadingBacentas(true);
+
+        const [zonesResponse, centersResponse, bacentasResponse] = await Promise.all([
+          axios.get("https://church-management-system-39vg.onrender.com/api/zones/"),
+          axios.get("https://church-management-system-39vg.onrender.com/api/centers/"),
+          axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/"),
+        ]);
+        
+        // After data is fetched, set the state and end loading
+        
+        setZone(zonesResponse.data);
+        setCenter(centersResponse.data);
+        setBacenta(bacentasResponse.data);
+        
       } catch (error) {
-        console.error("Error fetching zone:", error);
+        console.error("Error fetching data:", error);
+        setSnackbarMessage('Error fetching data');
+        setOpenSnackbar(true);
+      } finally {
+        // End loading once all data has been fetched
+        setLoadingZones(false);
+        setLoadingCenters(false);
+        setLoadingBacentas(false);
       }
     };
-    fetchZones();
-  }, []);
 
-  // Fetch center data
-  useEffect(() => {
-    const fetchCenters = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/api/centers/");
-        setCenter(response.data); // Adjust according to your API response
-      } catch (error) {
-        console.error("Error fetching center:", error);
-      }
-    };
-    fetchCenters();
-  }, []);
-
-  useEffect(() => {
-    const fetchBacenta = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-        console.log("Fetched Bacenta Data:", response.data);  // Check the structure of the response
-        setBacenta(response.data);  // Store the fetched bacenta data
-      } catch (error) {
-        console.error("Error fetching bacenta:", error);
-      }
-    };
-    fetchBacenta();
+    fetchData();
   }, []);
 
   // Handle form submission
   const handleSubmit = async (values) => {
     const formData = new FormData();
+    formData.append("firstName", values.firstName);
+    formData.append("lastName", values.lastName);
+    formData.append("userContact", values.userContact);
     formData.append("username", values.username);
     formData.append("password", values.password);
     formData.append("role", values.role);
     formData.append("permissions", JSON.stringify(values.permissions));
-    formData.append("centerId", centerID);
-    formData.append("bacentaId", bacentaID);
-    formData.append("zoneId", zoneID);
-    formData.append("email", values.email)
+    formData.append("centerId", values.center);
+    formData.append("bacentaId", values.bacenta);
+    formData.append("zoneId", values.zone);
+    formData.append("email", values.email);
 
     if (profileImage) {
       formData.append("profileImage", profileImage);  // Append the selected profile image
     }
-      // Log the FormData contents
-  for (let [key, value] of formData.entries()) {
-    console.log(key + ": " + value);
-  }
-
+  // Log FormData content to the console
+  // for (let [key, value] of formData.entries()) {
+  //   console.log(`${key}:`, value);
+  // }
     try {
-      const response = await axios.post('http://localhost:8080/api/users/', formData, {
+      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/users/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',  // Ensure the request is sent as multipart
         },
@@ -105,12 +123,59 @@ const User = () => {
       navigate("/users");
     } catch (error) {
       console.error('There was an error registering the user!', error);
-      alert('Error registering user');
+      setSnackbarMessage('Error registering user');
+      setOpenSnackbar(true);
     }
   };
 
+  const getPermissionsByRole = (role) => {
+    const rolePermissions = {
+      'administrator': [
+        'user:create', 'user:edit', 'user:delete', 'user:view',
+        'center:create', 'center:edit', 'center:delete', 'center:view',
+        'bacenta:create', 'bacenta:edit', 'bacenta:delete', 'bacenta:view',
+        'role:manage', 'permission:manage', 'report:view', 'dashboard:view',
+        'member:add', 'member:edit', 'member:view'
+      ],
+      
+      // Bishop role with some management permissions 
+      'bishop': [
+       'member:view',  'user:view', 'user:edit','center:view', 'bacenta:view','bacenta:edit', 'center:edit',
+        'report:view', 'dashboard:view', 'role:manage', 'permission:manage','donation:view', 'attendance:view'
+      ],
+      
+      // Lead Pastor role with user and center management
+      'lead_pastor': [
+        'user:view', 'user:edit', 'center:view', 'member:view', 'center:edit', 'zone:view', 'zone:edit',
+        'bacenta:view',  'report:view', 'dashboard:view', 'role:manage','attendance:view'
+      ],
+      
+      // Center Manager role with member management and reports
+      'center': [
+        'member:add','member:view', 'member:edit', 'bacenta:view','zone:view','dashboard:view', 
+         'report:view', 'donation:view', 'attendance:view'
+      ],
+      // Zone Manager role with member management and reports
+      'zone': [
+         'member:add','member:view', 'member:edit', 'bacenta:view','dashboard:view', 
+         'report:view', 'donation:view', 'attendance:view'
+      ],
+      
+      // Bacenta Leader role with basic bacenta and attendance management
+      'bacenta': [
+        'member:add', 'member:edit', 'member:view', 'report:view', 'dashboard:view',
+        'attendance:add', 'attendance:view', 'donation:add'
+      ]
+      // Add more roles and their corresponding permissions as needed
+    };
+  
+    // Default to an empty array if no role matches
+    return rolePermissions[role] || [];
+  };
+
+
   // Function to generate a random 8-character password
-const generateRandomPassword = () => {
+  const generateRandomPassword = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%$&#";
     let password = "";
     for (let i = 0; i < 8; i++) {
@@ -120,28 +185,35 @@ const generateRandomPassword = () => {
     return password;
   };
 
-  // Ensure that the form doesn't render until the zone data has been fetched
-  if (isLoading) {
+  // Ensure that the form doesn't render until the data has been fetched
+  if (loadingZones || loadingCenters || loadingBacentas) {
     return <div>Loading...</div>;  // Loading screen while waiting for data
   }
+
+  console.log(zone)
 
   return (
     <Box m="20px">
       <Header title="Create User" subtitle="Create a New User" />
+      
+      {/* Snackbar for Error Handling */}
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={() => setOpenSnackbar(false)}>
+        <Alert onClose={() => setOpenSnackbar(false)} severity="error">{snackbarMessage}</Alert>
+      </Snackbar>
 
       <Formik
         initialValues={{
           username: '',
+          firstName: '',
+          lastName: '',
+          userContact: '',
           password: generateRandomPassword(), // Automatically set the password here,
           zone: zoneID, 
           bacenta: '',
-          role: '',
+          role: '',  // Default to no role selected
           center: centerID,
           email:'',
-          permissions: [
-            'member:add','member:view', 'member:edit', 'bacenta:view','dashboard:view', 
-            'report:view', 'donation:view', 'attendance:view'
-         ],
+          permissions: [],  // Default to empty permissions
           profileImage: null,  // Initialize profileImage as null
         }}
         validationSchema={UserSchema}
@@ -179,19 +251,48 @@ const generateRandomPassword = () => {
                 sx={{ gridColumn: "span 4" }}
               />
 
-               {/* Password Text Field
+               {/* Firstname Text Field */}
                <TextField
                 fullWidth
                 variant="filled"
-                label="Password"
+                label="Firstname"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.password}
-                name="password"
-                error={!!touched.password && !!errors.password}
-                helperText={touched.password && errors.password}
+                value={values.firstName}
+                name="firstName"
+                error={!!touched.firstName && !!errors.firstName}
+                helperText={touched.firstName && errors.firstName}
                 sx={{ gridColumn: "span 4" }}
-              /> */}
+              />
+
+              {/* Lastname Text Field */}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Lastname"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.lastName}
+                name="lastName"
+                error={!!touched.lastName && !!errors.lastName}
+                helperText={touched.lastName && errors.lastName}
+                sx={{ gridColumn: "span 4" }}
+              />
+
+              {/* Contact Text Field */}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="UserContact"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.userContact}
+                name="userContact"
+                error={!!touched.userContact && !!errors.userContact}
+                helperText={touched.userContact && errors.userContact}
+                sx={{ gridColumn: "span 4" }}
+              />
+              
 
               {/* Email Text Field*/}
               <TextField
@@ -207,7 +308,40 @@ const generateRandomPassword = () => {
                 sx={{ gridColumn: "span 4" }}
                 />
 
-              {/* Center Select */}
+              {/* Role Select */}
+              <FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.role && !!errors.role}
+              >
+                <InputLabel>Role</InputLabel>
+                <Select
+                  name="role"
+                  value={values.role}
+                  //onChange={handleChange}
+                  label="Role"
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    const selectedRole = e.target.value;
+                    setFieldValue("role", selectedRole);
+                    
+                    // Update permissions based on selected role
+                    const permissions = getPermissionsByRole(selectedRole);
+                    setFieldValue("permissions", permissions);
+                  }}
+                >
+                  <MenuItem value="administrator">Administrator</MenuItem>
+                  <MenuItem value="bishop">Bishop</MenuItem>
+                  <MenuItem value="lead_pastor">Lead Pastor</MenuItem>
+                  <MenuItem value="center">Center</MenuItem>
+                  <MenuItem value="zone">Zone</MenuItem>
+                  <MenuItem value="bacenta">Bacenta</MenuItem>
+                </Select>
+                <FormHelperText>{touched.role && errors.role}</FormHelperText>
+              </FormControl>
+
+ {/* Center Select */}
               <FormControl
                 variant="filled"
                 fullWidth
@@ -248,7 +382,9 @@ const generateRandomPassword = () => {
                 <FormHelperText>{touched.center && errors.center}</FormHelperText>
               </FormControl>
 
-              <FormControl
+ 
+  {/* Zone Select */}
+ <FormControl
   variant="filled"
   fullWidth
   sx={{ gridColumn: "span 4" }}
@@ -287,8 +423,7 @@ const generateRandomPassword = () => {
   <FormHelperText>{touched.zone && errors.zone}</FormHelperText>
 </FormControl>
 
-
-              {/* Bacenta Select */}
+ {/* Bacenta Select */}
               <FormControl
                 variant="filled"
                 fullWidth
@@ -320,71 +455,36 @@ const generateRandomPassword = () => {
                 <FormHelperText>{touched.bacenta && errors.bacenta}</FormHelperText>
               </FormControl>
 
-              {/* Role Select */}
-              <FormControl
-                variant="filled"
+              {/* Profile Image Upload */}
+              <Input
+                type="file"
+                inputProps={{ accept: "image/*" }}
+                onChange={(event) => {
+                  setProfileImage(event.target.files[0]); // Store the selected file
+                  setFieldValue("profileImage", event.target.files[0]);
+                }}
                 fullWidth
                 sx={{ gridColumn: "span 4" }}
-                error={!!touched.role && !!errors.role}
+              />
+              {profileImage && (
+                <Box>
+                  <img
+                    src={URL.createObjectURL(profileImage)}
+                    alt="Profile Preview"
+                    style={{ width: "100px", height: "100px" }}
+                  />
+                </Box>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                fullWidth
+                type="submit"
+                color="secondary"
+                variant="contained"
+                sx={{ gridColumn: "span 4" }}
               >
-                <InputLabel id="role-label">Role</InputLabel>
-                <Select
-                  labelId="role-label"
-                  id="role"
-                  value={values.role}
-                  onChange={(e) => setFieldValue('role', e.target.value)}
-                  onBlur={handleBlur}
-                  name="role"
-                  label="Role"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value="bishop">Bishop</MenuItem>
-                  <MenuItem value="lead_pastor">Lead Pastor</MenuItem>
-                  <MenuItem value="administrator">Administrator</MenuItem>
-                  <MenuItem value="center">Center Leader</MenuItem>
-                  <MenuItem value="zone">Zone Leader</MenuItem>
-                  <MenuItem value="bacenta">Bacenta Leader</MenuItem>
-                </Select>
-                <FormHelperText>{touched.role && errors.role}</FormHelperText>
-              </FormControl>
-
-              {/* Image Upload */}
-              // Image Upload Section
-              <FormControl
-  variant="filled"
-  fullWidth
-  sx={{ gridColumn: "span 4" }}
-  error={!!touched.profileImage && !!errors.profileImage}
->
-  <InputLabel id="profileImage-label">Profile Image</InputLabel>
-  <Input
-    type="file"
-    accept="image/*"
-    onChange={(e) => {
-      const file = e.target.files ? e.target.files[0] : null; // Check if the file exists
-      if (file) {
-        console.log("File selected:", file); // Log the entire file object
-        setProfileImage(file);  // Store the file object in the state
-        setFieldValue('profileImage', file);  // Ensure Formik knows about the file
-      } else {
-        console.log("No file selected");
-      }
-    }}
-    style={{ gridColumn: "span 4" }}
-  />
-  {errors.profileImage && touched.profileImage && (
-    <FormHelperText error>{errors.profileImage}</FormHelperText>
-  )}
-</FormControl>
-
-
-            </Box>
-
-            <Box display="flex" justifyContent="end" mt="20px">
-              <Button type="submit" color="secondary" variant="contained">
-                Create New User
+                Create User
               </Button>
             </Box>
           </form>
@@ -395,4 +495,6 @@ const generateRandomPassword = () => {
 };
 
 export default User;
+
+
 

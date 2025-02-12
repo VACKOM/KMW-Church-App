@@ -78,7 +78,7 @@ const Center = () => {
   useEffect(() => {
     const fetchZone = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/zones/");
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
         setZone(response.data); // Assuming this is an array of zones
         
         // Filter zones based on the centerName

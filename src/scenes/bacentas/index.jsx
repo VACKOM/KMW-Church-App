@@ -44,14 +44,13 @@ const Bacentas = ({}) => {
     fetchCenters();
   }, []);
 
-  console.log(foundCenter)
 
   // Fetch zone data based on center
   useEffect(() => {
     if (foundCenter?.centerName) {
       const fetchZone = async () => {
         try {
-          const response = await axios.get("http://localhost:8080/api/zones/");
+          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
           setZones(response.data);
           // Filter zones based on the centerName
           const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
@@ -129,7 +128,6 @@ const Bacentas = ({}) => {
 
   // Button Add New Bacenta click handler
   const handleAddButtonClick = () => {
-    console.log(foundCenter.center)
     navigate("/add-bacenta" , { state: { foundCenter } });
 
   };

@@ -37,7 +37,7 @@ const Bacenta = () => {
   useEffect(() => {
     const fetchZones = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/zones/");
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
         setZone(response.data);
         setFoundedZone(response.data.filter(item => item.center === receivedCenter.centerName));
 
@@ -78,7 +78,6 @@ const Bacenta = () => {
 
   // Handle form submission
   const handleSubmit = async (values) => {
-    console.log(values);
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/bacentas/', values);
       alert('Bacenta registered successfully!');

@@ -12,7 +12,7 @@ const PrivateRoute = ({ roles, element }) => {
 
   // If user does not have necessary roles, redirect to unauthorized page
   if (roles && roles.length > 0 && !roles.includes(user?.role)) {
-    return Navigate( "/unauthorized");
+    return Navigate("/unauthorized") ;
   }
 
   // If user is authenticated and has required roles, render the component
@@ -20,3 +20,4 @@ const PrivateRoute = ({ roles, element }) => {
 };
 
 export default PrivateRoute;
+

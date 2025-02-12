@@ -117,7 +117,6 @@ const userZone = localStorage.getItem('zone');
      fetchBacenta();
    }, [foundZone]);
 
-   console.log(foundZone)
 
     // Fetch attendance data
 
