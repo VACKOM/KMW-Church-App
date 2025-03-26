@@ -44,7 +44,7 @@ const All= "0000";
     const fetchPicPath = async () => {
       try {
         // Ensure UserContact is available, and pass it correctly in the API request
-        const response = await axios.get(`http://localhost:8080/api/users/pictures/${All}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/pictures/${All}`);
         setPicturePath(response.data); // Adjust according to your API response
       } catch (error) {
         console.error("Error fetching user data:", error);

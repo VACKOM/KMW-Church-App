@@ -113,7 +113,7 @@ const User = () => {
       imageData.append("contactNumber", values.userContact);
   
       try {
-        const uploadResponse = await axios.post("http://localhost:8080/api/upload", imageData, {
+        const uploadResponse = await axios.post("https://church-management-system-39vg.onrender.com/api/upload", imageData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -123,7 +123,7 @@ const User = () => {
         formData.append("profileImage", profileImageUrl);  // Append the image URL from S3
   
         // Now, submit the rest of the user data
-        const response = await axios.post('http://localhost:8080/api/users/', formData, {
+        const response = await axios.post('https://church-management-system-39vg.onrender.com/api/users/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },

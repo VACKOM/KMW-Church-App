@@ -11,7 +11,7 @@ import Login from './components/users/Login';
 import AdminPage from './components/users/AdminPage';
 import UserPage from './components/users/UserPage';
 import HomePage from './components/users/HomePage';
-import Sidebar from './scenes/global/SideBar';
+import Sidebar from './scenes/global/Sidebar';
 // Dashboards Imports
 import Dashboard from './scenes/dashboard';
 import CenterDashboard from './scenes/dashboard/center';
