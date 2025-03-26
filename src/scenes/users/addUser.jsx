@@ -105,28 +105,39 @@ const User = () => {
     formData.append("bacentaId", values.bacenta);
     formData.append("zoneId", values.zone);
     formData.append("email", values.email);
-
+  
     if (profileImage) {
-      formData.append("profileImage", profileImage);  // Append the selected profile image
-    }
-  // Log FormData content to the console
-  // for (let [key, value] of formData.entries()) {
-  //   console.log(`${key}:`, value);
-  // }
-    try {
-      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/users/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',  // Ensure the request is sent as multipart
-        },
-      });
-      alert('User registered successfully!');
-      navigate("/users");
-    } catch (error) {
-      console.error('There was an error registering the user!', error);
-      setSnackbarMessage('Error registering user');
-      setOpenSnackbar(true);
+      // Upload the profile image separately
+      const imageData = new FormData();
+      imageData.append("file", profileImage);
+      imageData.append("contactNumber", values.userContact);
+  
+      try {
+        const uploadResponse = await axios.post("http://localhost:8080/api/upload", imageData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+  
+        const profileImageUrl = uploadResponse.data.fileUrl;
+        formData.append("profileImage", profileImageUrl);  // Append the image URL from S3
+  
+        // Now, submit the rest of the user data
+        const response = await axios.post('http://localhost:8080/api/users/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        alert('User registered successfully!');
+        navigate("/users");
+      } catch (error) {
+        console.error('There was an error uploading the profile image or registering the user!', error);
+        setSnackbarMessage('Error registering user');
+        setOpenSnackbar(true);
+      }
     }
   };
+  
 
   const getPermissionsByRole = (role) => {
     const rolePermissions = {

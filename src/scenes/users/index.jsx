@@ -16,7 +16,7 @@ const Users = ({}) => {
   const [error, setError] = useState(null); // Add an error state
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
-  
+  const[picturePath,setPicturePath]= useState([]);
 
   // Fetch users
   useEffect(() => {
@@ -24,6 +24,7 @@ const Users = ({}) => {
       try {
         const response = await axios.get('https://church-management-system-39vg.onrender.com/api/users/');
         setUsers(response.data);
+        console.log(response.data);
         setLoading(false);  // Data is loaded
        
       } catch (error) {
@@ -35,27 +36,50 @@ const Users = ({}) => {
     fetchUsers();
   }, []);
 
-  // Update users list when users data is fetched
-  useEffect(() => {
-    if (users.length > 0) {
-      const combinedData = users.map((user) => {
-          return {
-            ID: user._id,
-            id: user._id,
-            username: user.username, // Ensure each row has a unique 'id' property
-            //userId: user.userId,
-            userName: user.userName,
-            email: user.email,
-            role: user.role,
-            profileImagePath: user.profileImagePath
-            
-          };
-        });
-      setUsersList(combinedData);  // Update the usersList state
-      
-    }
-  }, [users]);
+const All= "0000";
+  // Fetch Picture path
 
+  useEffect(() => {
+    
+    const fetchPicPath = async () => {
+      try {
+        // Ensure UserContact is available, and pass it correctly in the API request
+        const response = await axios.get(`http://localhost:8080/api/users/pictures/${All}`);
+        setPicturePath(response.data); // Adjust according to your API response
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    fetchPicPath();
+  }, [All]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
+
+  console.log(picturePath.fileUrl);
+ 
+// Update users list when users data is fetched
+useEffect(() => {
+  if (users.length > 0 && picturePath.length > 0) {
+    const combinedData = users.map((user) => {
+      // Find the picturePath that matches the user's contact number
+      const userPicture = picturePath.find(pic => pic.originalName === user.userContact);
+      
+      // If a picture is found, set the fileUrl, otherwise set a default image or leave it empty
+      const profileImagePath = userPicture ? userPicture.fileUrl : 'path/to/default/image.jpg'; 
+
+      return {
+        ID: user._id,
+        id: user._id,
+        username: user.username,
+        userName: user.userName,
+        email: user.email,
+        role: user.role,
+        profileImagePath: profileImagePath
+      };
+    });
+
+    setUsersList(combinedData);  // Update the usersList state
+  }
+}, [users, picturePath]); // Dependency on both users and picturePath
 
   // Button Add New User click handler
   const handleAddButtonClick = () => {

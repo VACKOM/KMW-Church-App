@@ -52,6 +52,7 @@ const Sidebar = ({ userRole }) => {
   const[zone,setZone]= useState([]);
   const[center,setCenter]= useState([]);
   const[bacenta,setBacenta]= useState([]);
+  const[picturePath,setPicturePath]= useState([]);
 
   const userId = localStorage.getItem('userId');
   const zoneId = localStorage.getItem('zone');
@@ -122,11 +123,35 @@ const Sidebar = ({ userRole }) => {
     };
     fetchBacenta();
   }, []);
+  
+const UserContact = user.userContact
 
 
-const UserPicture = user.profileImagePath// Example URL from the database';
+
+   // Fetch Picture path
+
+   useEffect(() => {
+    const fetchPicPath = async () => {
+      try {
+        // Ensure UserContact is available, and pass it correctly in the API request
+        const response = await axios.get(`http://localhost:8080/api/users/picturepath/${UserContact}`);
+        setPicturePath(response.data); // Adjust according to your API response
+        console.log(response.data)
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    fetchPicPath();
+  }, [UserContact]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
+  
+  
+  
+
+
+const UserPicture = picturePath.fileUrl;// Example URL from the database';
  
-
+console.log(UserPicture);
 
   useEffect(() => {
     if (isMobile) {
@@ -268,6 +293,7 @@ const UserPicture = user.profileImagePath// Example URL from the database';
                   width="100px"
                   height="100px"
                   src={UserPicture}
+      
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
               </Box>
