@@ -17,8 +17,7 @@ import Dashboard from './scenes/dashboard';
 import CenterDashboard from './scenes/dashboard/center';
 import ZoneDashboard from './scenes/dashboard/zone';
 import BacentaDashboard from './scenes/dashboard/bacenta';
-import Users from './scenes/users';
-import AddUser from './scenes/users/addUser';
+
 
 // Other Pages
 import Centers from './scenes/centers';
@@ -29,6 +28,10 @@ import Bacenta from './scenes/bacentas/addBacenta';
 import Bacentas from './scenes/bacentas';
 import Attendance from './scenes/bacentas/attendance';
 import AddAttendance from './scenes/bacentas/addAttendance';
+import Users from './scenes/users';
+import AddUser from './scenes/users/addUser';
+import Members from './scenes/members';
+// import AddMember from './scenes/members/addMember';
 
 const useIsPublicRoute = () => {
   const location = useLocation();
@@ -108,6 +111,8 @@ const App = () => {
               <Route path="/add-attendance" element={<AddAttendance />} />
               <Route path="/users" element={<Users />} />
               <Route path="/add-user" element={<AddUser />} />
+              <Route path="/members" element={<Members />} />
+              {/* <Route path="/add-member" element={<AddMember />} /> */}
             </Routes>
           </main>
         </div>

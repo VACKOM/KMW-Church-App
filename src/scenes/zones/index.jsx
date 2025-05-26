@@ -37,24 +37,30 @@ const Zones = () => {
     fetchCenter();
   }, []); 
 
-  // Fetch zone data based on center
   useEffect(() => {
     if (foundCenter?.centerName) {
       const fetchZone = async () => {
         try {
           const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-          setZone(response.data);
-          // Filter zones based on the centerName
-          const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
-          setFoundZone(filteredZones); // Set zones that match the centerName
+          setZone(response.data); // Set all zones regardless of filter
+  
+          if (foundCenter.centerName === "ALL") {
+            setFoundZone(response.data); // Show all zones
+          } else {
+            const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
+            setFoundZone(filteredZones); // Set zones that match the centerName
+          }
+  
         } catch (error) {
           setError("Error fetching zones");
           console.error("Error fetching zone:", error);
         }
       };
+  
       fetchZone();
     }
-  }, [foundCenter]); // Trigger fetchZone when foundCenter changes
+  }, [foundCenter]);
+  
 
   // Set loading state to false when data is loaded
   useEffect(() => {

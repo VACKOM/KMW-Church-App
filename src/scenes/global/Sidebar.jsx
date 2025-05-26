@@ -746,7 +746,7 @@ console.log(UserPicture);
             </Typography>
             <Item
                 title="Membership List"
-                to="/bacentas"
+                to="/members"
                 icon={<MembershipOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}

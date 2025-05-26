@@ -14,6 +14,9 @@ const Users = ({}) => {
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true); // Add a loading state
   const [error, setError] = useState(null); // Add an error state
+  const [centers, setCenters] = useState([]);
+  const [bacentas, setBacentas] = useState([]);
+  const [zones, setZones] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
   const[picturePath,setPicturePath]= useState([]);
@@ -36,6 +39,63 @@ const Users = ({}) => {
     fetchUsers();
   }, []);
 
+  // Fetch centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/centers/');
+        setCenters(response.data);
+        setLoading(false);  // Data is loaded
+       
+      } catch (error) {
+        console.error('Error fetching centers:', error);
+        setError('Failed to load centers or no centers available');
+        setLoading(false);  // Data loading is done, but there was an error
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  
+  // Fetch zones
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
+        setZones(response.data);
+        setLoading(false);  // Data is loaded
+       
+       
+      } catch (error) {
+        console.error('Error fetching zones:', error);
+        setError('Failed to load zones or no zones available');
+        setLoading(false);  // Data loading is done, but there was an error
+      }
+    };
+    fetchZones();
+  }, []);
+
+  // Fetch bacentas
+  useEffect(() => {
+    const fetchBacentas = async () => {
+      try {
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
+        setBacentas(response.data);
+        setLoading(false);  // Data is loaded
+       
+       
+      } catch (error) {
+        console.error('Error fetching bacentas:', error);
+        setError('Failed to load bacentas or no bacentas available');
+        setLoading(false);  // Data loading is done, but there was an error
+      }
+    };
+    fetchBacentas();
+  }, []);
+  
+  
+
+
 const All= "0000";
   // Fetch Picture path
 
@@ -54,32 +114,43 @@ const All= "0000";
     fetchPicPath();
   }, [All]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
 
-  console.log(picturePath.fileUrl);
+  //console.log(picturePath.fileUrl);
  
-// Update users list when users data is fetched
-useEffect(() => {
-  if (users.length > 0 && picturePath.length > 0) {
-    const combinedData = users.map((user) => {
-      // Find the picturePath that matches the user's contact number
-      const userPicture = picturePath.find(pic => pic.originalName === user.userContact);
-      
-      // If a picture is found, set the fileUrl, otherwise set a default image or leave it empty
-      const profileImagePath = userPicture ? userPicture.fileUrl : 'path/to/default/image.jpg'; 
+  useEffect(() => {
+    if (users.length > 0 && picturePath.length > 0) {
+      const combinedData = users.map((user) => {
+        const userPicture = picturePath.find(pic => pic.originalName === user.userContact);
+        const profileImagePath = userPicture ? userPicture.fileUrl : 'path/to/default/image.jpg'; 
+  
+        const userCenter = centers.find(center => center._id === user.centerId);
+        const centerName = userCenter ? userCenter.centerName : "N/A";
 
-      return {
-        ID: user._id,
-        id: user._id,
-        username: user.username,
-        userName: user.userName,
-        email: user.email,
-        role: user.role,
-        profileImagePath: profileImagePath
-      };
-    });
+        const userZone = zones.find(zone => zone._id === user.zoneId);
+        const zoneName = userZone ? userZone.zoneName : "N/A";
 
-    setUsersList(combinedData);  // Update the usersList state
-  }
-}, [users, picturePath]); // Dependency on both users and picturePath
+        const userBacenta = bacentas.find(bacenta => bacenta._id === user.bacentaId);
+        const bacentaName = userBacenta? userBacenta.bacentaName : "N/A";
+
+        //console.log(bacentas);
+  
+        return {
+          ID: user._id,
+          id: user._id,
+          username: user.username,
+          userName: user.userName,
+          contact: user.userContact,
+          role: user.role,
+          center: centerName,  // Display name only
+          zone: zoneName,
+          bacenta: bacentaName,
+          profileImagePath: profileImagePath
+        };
+      });
+  
+      setUsersList(combinedData);
+    }
+  }, [users, picturePath, centers]);
+  
 
   // Button Add New User click handler
   const handleAddButtonClick = () => {
@@ -108,7 +179,7 @@ useEffect(() => {
 
   // Columns for DataGrid with editable fields
   const columns = [
-    { field: "id", headerName: "User ID", editable: false },
+    //{ field: "id", headerName: "User ID", editable: false },
     {
       field: "profileImagePath", 
       headerName: "Profile Image", 
@@ -133,7 +204,10 @@ useEffect(() => {
     },
     { field: "username", headerName: "User Name", flex: 1, editable: true },
     { field: "role", headerName: "User Role", flex: 1, editable: true },
-    { field: "email", headerName: "User Email", flex: 1, editable: true }
+    { field: "center", headerName: "User Center", flex: 1, editable: true },
+    { field: "zone", headerName: "User Zone", flex: 1, editable: true },
+    { field: "bacenta", headerName: "User Bacenta", flex: 1, editable: true },
+    { field: "contact", headerName: "User Contact", flex: 1, editable: true }
   ];
   
 
