@@ -31,7 +31,7 @@ import AddAttendance from './scenes/bacentas/addAttendance';
 import Users from './scenes/users';
 import AddUser from './scenes/users/addUser';
 import Members from './scenes/members';
-// import AddMember from './scenes/members/addMember';
+import AddMember from './scenes/members/addMember';
 
 const useIsPublicRoute = () => {
   const location = useLocation();
@@ -112,7 +112,7 @@ const App = () => {
               <Route path="/users" element={<Users />} />
               <Route path="/add-user" element={<AddUser />} />
               <Route path="/members" element={<Members />} />
-              {/* <Route path="/add-member" element={<AddMember />} /> */}
+              <Route path="/add-member" element={<AddMember />} />
             </Routes>
           </main>
         </div>

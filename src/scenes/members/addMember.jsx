@@ -9,24 +9,39 @@ import { useNavigate, useLocation } from "react-router-dom";
 import MuiAlert from '@mui/material/Alert';
 
 // Validation Schema
-const UserSchema = yup.object().shape({
+const MemberSchema = yup.object().shape({
   firstName: yup.string().required("First Name is required"),
+  mname: yup.string().required("Middle Name is required"),
   lastName: yup.string().required("Last Name is required"),
-  username: yup.string().required("Username is required"),
-  email: yup.string().required("Email is required"),
-  userContact: yup.string().required("Member Contact is required"),
+  dob: yup.string().required("Date of Birth is required"),
+  email: yup.string().email("Invalid email format").required("Email is required"),
+  address: yup.string().required("Address is required"),
+  digital: yup.string().required("Digital Address is required"),
+  contact: yup.string().required("Member's Contact is required"),
+  occupation: yup.string().required("Member's Occupation is required"),
+  baptism: yup.string().required("Baptism Status is required"),
+  basonta: yup.string().required("Basonta is required"),
+  bacenta: yup.string().required("Bacenta is required"),
+  gender: yup.string().required("Gender is required"),
   role: yup.string().required("Role is required"),
   center: yup.string().required("Center is required"),
   zone: yup.string().required("Zone is required"),
-  bacenta: yup.string().required("Bacenta is required"),
+  school: yup.string().required("Lay School is required"),
+  date_joined: yup.string().required("Date Joined is required"),
   profileImage: yup.mixed().required("Profile image is required"),  // Added validation for profile image
+  reference: yup.string().required("Reference is required"),
+
+  
+  
 });
+
+
 
 const Member = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const navigate = useNavigate();
   const location = useLocation();
-  const role = localStorage.getItem('role');
+  // const role = localStorage.getItem('role');
   
   const [bacenta, setBacenta] = useState([]);
   const [zone, setZone] = useState([]);
@@ -36,7 +51,7 @@ const Member = () => {
   const [zoneID, setZoneID] = useState([]);
   const [bacentaID, setBacentaID] = useState();
 
-  const [foundCenter, setFoundCenter] = useState();
+  //const [foundCenter, setFoundCenter] = useState();
   const [foundZone, setFoundZone] = useState([]);
   const [foundBacenta, setFoundBacenta] = useState([]);
 
@@ -91,26 +106,17 @@ const Member = () => {
     fetchData();
   }, []);
 
-  // Handle form submission
-  const handleSubmit = async (values) => {
-    const formData = new FormData();
-    formData.append("firstName", values.firstName);
-    formData.append("lastName", values.lastName);
-    formData.append("userContact", values.userContact);
-    formData.append("username", values.username);
-    formData.append("password", values.password);
-    formData.append("role", values.role);
-    formData.append("permissions", JSON.stringify(values.permissions));
-    formData.append("centerId", values.center);
-    formData.append("bacentaId", values.bacenta);
-    formData.append("zoneId", values.zone);
-    formData.append("email", values.email);
   
+
+  const handleSubmit = async (values) => {
+   //.log("Submit button has been clicked");
+  
+    // Upload image first
+    let profileImageUrl = "";
     if (profileImage) {
-      // Upload the profile image separately
       const imageData = new FormData();
       imageData.append("file", profileImage);
-      imageData.append("contactNumber", values.userContact);
+      imageData.append("contactNumber", values.contact);
   
       try {
         const uploadResponse = await axios.post("https://church-management-system-39vg.onrender.com/api/upload", imageData, {
@@ -119,89 +125,75 @@ const Member = () => {
           },
         });
   
-        const profileImageUrl = uploadResponse.data.fileUrl;
-        formData.append("profileImage", profileImageUrl);  // Append the image URL from S3
-  
-        // Now, submit the rest of the Member data
-        const response = await axios.post('https://church-management-system-39vg.onrender.com/api/users/', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        alert('Member registered successfully!');
-        navigate("/users");
+        profileImageUrl = uploadResponse.data.fileUrl;
+        console.log("Uploaded image URL:", profileImageUrl);
       } catch (error) {
-        console.error('There was an error uploading the profile image or registering the Member!', error);
-        setSnackbarMessage('Error registering Member');
+        console.error("Image upload failed:", error);
+        setSnackbarMessage("Error uploading image");
         setOpenSnackbar(true);
+        return;
       }
     }
-  };
   
-
-  const getPermissionsByRole = (role) => {
-    const rolePermissions = {
-      'administrator': [
-        'Member:create', 'Member:edit', 'Member:delete', 'Member:view',
-        'center:create', 'center:edit', 'center:delete', 'center:view',
-        'bacenta:create', 'bacenta:edit', 'bacenta:delete', 'bacenta:view',
-        'role:manage', 'permission:manage', 'report:view', 'dashboard:view',
-        'member:add', 'member:edit', 'member:view'
-      ],
-      
-      // Bishop role with some management permissions 
-      'bishop': [
-       'member:view',  'Member:view', 'Member:edit','center:view', 'bacenta:view','bacenta:edit', 'center:edit',
-        'report:view', 'dashboard:view', 'role:manage', 'permission:manage','donation:view', 'attendance:view'
-      ],
-      
-      // Lead Pastor role with Member and center management
-      'lead_pastor': [
-        'Member:view', 'Member:edit', 'center:view', 'member:view', 'center:edit', 'zone:view', 'zone:edit',
-        'bacenta:view',  'report:view', 'dashboard:view', 'role:manage','attendance:view'
-      ],
-      
-      // Center Manager role with member management and reports
-      'center': [
-        'member:add','member:view', 'member:edit', 'bacenta:view','zone:view','dashboard:view', 
-         'report:view', 'donation:view', 'attendance:view'
-      ],
-      // Zone Manager role with member management and reports
-      'zone': [
-         'member:add','member:view', 'member:edit', 'bacenta:view','dashboard:view', 
-         'report:view', 'donation:view', 'attendance:view'
-      ],
-      
-      // Bacenta Leader role with basic bacenta and attendance management
-      'bacenta': [
-        'member:add', 'member:edit', 'member:view', 'report:view', 'dashboard:view',
-        'attendance:add', 'attendance:view', 'donation:add'
-      ]
-      // Add more roles and their corresponding permissions as needed
+    // Now prepare data to send as JSON
+    const data = {
+      firstName: values.firstName,
+      lastName: values.lastName,
+      mname: values.mname,
+      dob: values.dob,
+      email: values.email,
+      address: values.address,
+      digital: values.digital,
+      contact: values.contact,
+      occupation: values.occupation,
+      baptism: values.baptism,
+      basonta: values.basonta,
+      bacenta: values.bacenta,
+      gender: values.gender,
+      role: values.role,
+      center: values.center,
+      zone: values.zone,
+      school: values.school,
+      date_joined: values.date_joined,
+      reference: values.reference,
+      profileImage: profileImageUrl,
     };
   
-    // Default to an empty array if no role matches
-    return rolePermissions[role] || [];
-  };
-
-
-  // Function to generate a random 8-character password
-  const generateRandomPassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%$&#";
-    let password = "";
-    for (let i = 0; i < 8; i++) {
-      const randomIndex = Math.floor(Math.random() * chars.length);
-      password += chars[randomIndex];
+   //console.log("Final data to POST:", data);
+  
+    try {
+      const response = await axios.post("https://church-management-system-39vg.onrender.com/api/members", data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      alert("Member registered successfully!");
+      navigate("/members");
+    } catch (error) {
+      console.error("Error registering member:");
+  
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      } else if (error.request) {
+        console.error("Request made but no response received:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
+  
+      setSnackbarMessage("Error registering Member");
+      setOpenSnackbar(true);
     }
-    return password;
   };
+  
 
   // Ensure that the form doesn't render until the data has been fetched
   if (loadingZones || loadingCenters || loadingBacentas) {
     return <div>Loading...</div>;  // Loading screen while waiting for data
   }
 
-  console.log(zone)
+  //console.log(zone)
 
   return (
     <Box m="20px">
@@ -214,20 +206,29 @@ const Member = () => {
 
       <Formik
         initialValues={{
-          username: '',
           firstName: '',
           lastName: '',
-          userContact: '',
-          password: generateRandomPassword(), // Automatically set the password here,
+          mname: '',
+          dob: '',
+          gender: '',
+          email: '', // Automatically set the password here,
           zone: zoneID, 
-          bacenta: '',
+          bacenta: bacentaID,
           role: '',  // Default to no role selected
           center: centerID,
-          email:'',
-          permissions: [],  // Default to empty permissions
+          address: '',  // Default to empty permissions
           profileImage: null,  // Initialize profileImage as null
+          digital:'',
+          contact: '',
+          occupation:'',
+          baptism:'',
+          basonta: '',
+          reference: '',
+          school:'',
+          date_joined:''
+         
         }}
-        validationSchema={UserSchema}
+        validationSchema={MemberSchema}
         onSubmit={handleSubmit}
       >
         {({
@@ -248,25 +249,12 @@ const Member = () => {
                 "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
               }}
             >
-               {/* Username Text Field */}
-               <TextField
-                fullWidth
-                variant="filled"
-                label="Username"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.username}
-                name="username"
-                error={!!touched.username && !!errors.username}
-                helperText={touched.username && errors.username}
-                sx={{ gridColumn: "span 4" }}
-              />
 
                {/* Firstname Text Field */}
                <TextField
                 fullWidth
                 variant="filled"
-                label="Firstname"
+                label="First Name"
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.firstName}
@@ -280,7 +268,7 @@ const Member = () => {
               <TextField
                 fullWidth
                 variant="filled"
-                label="Lastname"
+                label="Last Name"
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.lastName}
@@ -290,17 +278,74 @@ const Member = () => {
                 sx={{ gridColumn: "span 4" }}
               />
 
+              {/* middlename Text Field */}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Middle Name"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.mname}
+                name="mname"
+                error={!!touched.mname && !!errors.mname}
+                helperText={touched.mname && errors.mname}
+                sx={{ gridColumn: "span 4" }}
+              />
+
+              {/* Date of birth Text Field */}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Date of Birth"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.dob}
+                name="dob"
+                error={!!touched.dob&& !!errors.dob}
+                helperText={touched.dob && errors.dob}
+                sx={{ gridColumn: "span 4" }}
+              />
+
+                {/* Gender Select */}
+ <FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.gender && !!errors.gender}
+              >
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  name="gender"
+                  value={values.gender}
+                  //onChange={handleChange}
+                  label="Gender"
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    const selectedgender = e.target.value;
+                    setFieldValue("gender", selectedgender);
+      
+                  }}
+                >
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  
+                  
+                </Select>
+                <FormHelperText>{touched.gender && errors.gender}</FormHelperText>
+              </FormControl>
+
+
               {/* Contact Text Field */}
               <TextField
                 fullWidth
                 variant="filled"
-                label="UserContact"
+                label="Contact"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.userContact}
-                name="userContact"
-                error={!!touched.userContact && !!errors.userContact}
-                helperText={touched.userContact && errors.userContact}
+                value={values.contact}
+                name="contact"
+                error={!!touched.contact && !!errors.contact}
+                helperText={touched.contact && errors.contact}
                 sx={{ gridColumn: "span 4" }}
               />
               
@@ -318,6 +363,50 @@ const Member = () => {
                 helperText={touched.email && errors.email}
                 sx={{ gridColumn: "span 4" }}
                 />
+
+
+              {/* Address Text Field*/}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Address"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.address}
+                name="address"
+                error={!!touched.address && !!errors.address}
+                helperText={touched.address && errors.address}
+                sx={{ gridColumn: "span 4" }}
+                />
+
+                 {/* Dgital Text Field*/}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Digital"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.digital}
+                name="digital"
+                error={!!touched.digital && !!errors.digital}
+                helperText={touched.digital && errors.digital}
+                sx={{ gridColumn: "span 4" }}
+                />
+
+                  {/* Occupation Text Field*/}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="occupation"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.occupation}
+                name="occupation"
+                error={!!touched.occupation && !!errors.occupation}
+                helperText={touched.occupation && errors.occupation}
+                sx={{ gridColumn: "span 4" }}
+                />
+
 
               {/* Role Select */}
               <FormControl
@@ -338,16 +427,14 @@ const Member = () => {
                     setFieldValue("role", selectedRole);
                     
                     // Update permissions based on selected role
-                    const permissions = getPermissionsByRole(selectedRole);
-                    setFieldValue("permissions", permissions);
+                    //const permissions = getPermissionsByRole(selectedRole);
+                    //setFieldValue("permissions", permissions);
                   }}
                 >
-                  <MenuItem value="administrator">Administrator</MenuItem>
-                  <MenuItem value="bishop">Bishop</MenuItem>
-                  <MenuItem value="lead_pastor">Lead Pastor</MenuItem>
-                  <MenuItem value="center">Center</MenuItem>
-                  <MenuItem value="zone">Zone</MenuItem>
-                  <MenuItem value="bacenta">Bacenta</MenuItem>
+                  <MenuItem value="Member">Member</MenuItem>
+                  <MenuItem value="Shepherd">Shepherd</MenuItem>
+                  <MenuItem value="Pastor">Pastor</MenuItem>
+                 
                 </Select>
                 <FormHelperText>{touched.role && errors.role}</FormHelperText>
               </FormControl>
@@ -466,6 +553,124 @@ const Member = () => {
                 <FormHelperText>{touched.bacenta && errors.bacenta}</FormHelperText>
               </FormControl>
 
+             {/* baptism_status Select */}
+ <FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.baptism && !!errors.baptism}
+              >
+                <InputLabel>Baptism Status</InputLabel>
+                <Select
+                  name="baptism"
+                  value={values.baptism}
+                  //onChange={handleChange}
+                  label="baptism"
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    const selectedbaptism= e.target.value;
+                    setFieldValue("baptism", selectedbaptism);
+      
+                  }}
+                >
+                  <MenuItem value="Yes">Yes</MenuItem>
+                  <MenuItem value="No">No</MenuItem>
+                  
+                  
+                </Select>
+                <FormHelperText>{touched.baptism&& errors.baptism}</FormHelperText>
+              </FormControl>
+
+{/* basonta Select */}
+<FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.basonta && !!errors.basonta}
+              >
+                <InputLabel>Basonta</InputLabel>
+                <Select
+                  name="basonta"
+                  value={values.basonta}
+                  //onChange={handleChange}
+                  label="basonta"
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    const selectedbasonta = e.target.value;
+                    setFieldValue("basonta", selectedbasonta);
+                    
+      
+                  }}
+                >
+                  <MenuItem value="basonta 1">Basonta 1</MenuItem>
+                  <MenuItem value="basonta 2">Basonta 2</MenuItem>
+                  <MenuItem value="basonta 3">Basonta 3</MenuItem>
+                  
+                </Select>
+                <FormHelperText>{touched.basonta && errors.basonta}</FormHelperText>
+              </FormControl>
+              
+             
+{/* Lay School Select */}
+<FormControl
+                variant="filled"
+                fullWidth
+                sx={{ gridColumn: "span 4" }}
+                error={!!touched.school && !!errors.school}
+              >
+                <InputLabel>Lay School</InputLabel>
+                <Select
+                  name="school"
+                  value={values.school}
+                  //onChange={handleChange}
+                  label="Lay School"
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    const selectedschool = e.target.value;
+                    setFieldValue("school", selectedschool);
+                    
+      
+                  }}
+                >
+                  <MenuItem value="lay 1">Lay School 1</MenuItem>
+                  <MenuItem value="lay 2">Lay School 2</MenuItem>
+                  <MenuItem value="lay 3">Lay School 3</MenuItem>
+                  
+                </Select>
+                <FormHelperText>{touched.school && errors.school}</FormHelperText>
+              </FormControl>
+
+
+                    {/* Reference Text Field*/}
+                    <TextField
+                fullWidth
+                variant="filled"
+                label="Reference"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.reference}
+                name="reference"
+                error={!!touched.reference && !!errors.reference}
+                helperText={touched.reference && errors.reference}
+                sx={{ gridColumn: "span 4" }}
+                />
+
+
+              {/* Date joined Text Field */}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Date Joined"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.date_joined}
+                name="date_joined"
+                error={!!touched.date_joined&& !!errors.date_joined}
+                helperText={touched.date_joined && errors.date_joined}
+                sx={{ gridColumn: "span 4" }}
+              />
+
+
               {/* Profile Image Upload */}
               <Input
                 type="file"
@@ -486,6 +691,9 @@ const Member = () => {
                   />
                 </Box>
               )}
+              
+
+ 
 
               {/* Submit Button */}
               <Button
