@@ -6,25 +6,25 @@ import axios from "axios";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 
 
 // Validation Schema
 const attendanceSchema = yup.object().shape({
-    bacentaMembership: yup.string().required("Membership Number is required"),
+    date: yup.string().required("Attendance Date is required"),
+    sundayAttendance:yup.string().required("Sunday Attendance is required"),
     adultAttendance: yup.string().required("Adult Attendance is required"),
-    // attendanceID: yup.string(),
     childrenAttendance: yup.string().required("Children Attendance is required"),
     soulsInChurch: yup.string().required("No of Souls Brought Today is required"),
     newBelieversSchoolAttendance: yup.string().required("New Belivers School attendance is required"),
     bacentaMeetingAttendance: yup.string().required("Bacenta Meeting attendance is required"),
     membersAbsent: yup.string().required("Number of Members Absent is required"),
     laySchoolAttendance: yup.string().required("Lay schools attendance is required"),
-    centerName: yup.string().required("Center is required"),
-    bacentaName: yup.string().required("Bacenta Name is required"),
-    noBacentaMeeting: yup.string().required("No of no Bacenta Meeting is required"),
-    dateAttendance: yup.string().required("Attendance Date is required")
+   
+    
 
   });
 
@@ -34,21 +34,37 @@ const addAttendance = () => {
    // State hooks to hold data
    const [center, setCenter] = useState([]);
    const [bacenta, setBacenta] = useState([]);
+   const [zone, setZone] = useState([]);
    const navigate = useNavigate(); // Initialize the navigate function
 
+   const userCenter = localStorage.getItem('center');
+   const userZone = localStorage.getItem('zone');
+   const userBacenta = localStorage.getItem('bacenta');
+
  
-   // Fetch Centers data
-   useEffect(() => {
-     const fetchCenters = async () => {
-       try {
-         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
-         setCenter(response.data); // Adjust according to your API response
-       } catch (error) {
-         console.error("Error fetching center:", error);
-       }
-     };
-     fetchCenters();
-   }, []);
+ // Fetch Centers data
+useEffect(() => {
+  const fetchCenters = async () => {
+    try {
+      const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
+      
+      // Find the specific center by matching with userBacenta
+      const specificCenter = response.data.find(center => center._id === userCenter);
+
+      if (specificCenter) {
+        setCenter(specificCenter); // Assuming setCenter is for one center
+      } else {
+        console.warn('No matching center found for:', userCenter);
+      }
+
+    } catch (error) {
+      console.error("Error fetching center:", error);
+    }
+  };
+
+  fetchCenters();
+}, []);
+
 
 
    // Fetch Bacenta data
@@ -56,7 +72,15 @@ const addAttendance = () => {
     const fetchBacentas = async () => {
       try {
         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-        setBacenta(response.data); // Adjust according to your API response
+       // Find the specific center by matching with userBacenta
+      const specificBacenta = response.data.find(bacenta => bacenta._id === userBacenta);
+
+      if (specificBacenta) {
+        setBacenta(specificBacenta); // Assuming setCenter is for one bacenta
+      } else {
+        console.warn('No matching bacenta found for:', userBacenta);
+      }
+     
       } catch (error) {
         console.error("Error fetching bacenta:", error);
       }
@@ -64,19 +88,29 @@ const addAttendance = () => {
     fetchBacentas();
   }, []);
 
+     // Fetch Zone data
+     useEffect(() => {
+      const fetchZones = async () => {
+        try {
+          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
+         // Find the specific center by matching with userZone
+        const specificZone = response.data.find(zone => zone._id === userZone);
+  
+        if (specificZone) {
+          setZone(specificZone); // Assuming setCenter is for one bacenta
+        } else {
+          console.warn('No matching zone found for:', userZone);
+        }
+       
+        } catch (error) {
+          console.error("Error fetching zone:", error);
+        }
+      };
+      fetchZones();
+    }, []);
 
-  //  // Fetch Bacentas data
-  //  useEffect(() => {
-  //   const fetchBacentas = async () => {
-  //     try {
-  //       const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-  //       setBcenta(response.data); // Adjust according to your API response
-  //     } catch (error) {
-  //       console.error("Error fetching bacenta:", error);
-  //     }
-  //   };
-  //   fetchBacentas();
-  // }, []);
+  //console.log(zone.zoneName);
+
  
 
     // SKU generation logic (attendance, random number)
@@ -90,6 +124,7 @@ const addAttendance = () => {
 
   // Handle form submission
   const handleSubmit = async (values) => {
+    console.log("Submitting values:", values);
     try {
       const response = await axios.post('https://church-management-system-39vg.onrender.com/api/attendances/', values);
       alert('Attendance filled successfully!');
@@ -100,14 +135,22 @@ const addAttendance = () => {
     }
   };
 
+ console.log(center.centerName);
+ if (!center.centerName || !bacenta.bacentaName || !zone.zoneName) {
+  return <div>Loading...</div>; // Or a spinner if you prefer
+}
+
+
   return (
     <>
       <Box m="20px">
         <Header title="Attendance Recorder" subtitle="Enter  Attendance " />
 
         <Formik
+          enableReinitialize
           initialValues={{
-            bacentaMembership: "",
+            date: "",
+            sundayAttendance:"",
             adultAttendance: "",
             childrenAttendance: "",
             soulsInChurch: "",
@@ -115,10 +158,10 @@ const addAttendance = () => {
             newBelieversSchoolAttendance: "",
             membersAbsent: "",
             laySchoolAttendance: "",
-            centerName: "",
-            bacentaName: "",
-            dateAttendance: "",
-            noBacentaMeeting:""
+            centerName: center.centerName,
+            bacentaName: bacenta.bacentaName,
+            zoneName: zone.zoneName,
+            
           }}
           validationSchema={attendanceSchema}
           onSubmit={handleSubmit}
@@ -144,162 +187,51 @@ const addAttendance = () => {
                 
 
                  {/* Date of Attendance */}
-                 <TextField
+                
+<LocalizationProvider dateAdapter={AdapterDateFns}>
+  <DatePicker
+    label="Date"
+    value={values.date}
+    onChange={(newValue) => {
+      handleChange({
+        target: {
+          name: 'date',
+          value: newValue,
+        },
+      });
+    }}
+    onBlur={handleBlur}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        fullWidth
+        variant="filled"
+        name="date"
+        error={!!touched.date && !!errors.date}
+        helperText={touched.date && errors.date}
+        //sx={{ gridColumn: "span 4" }}
+      />
+    )}
+    sx={{ gridColumn: "span 4" }}
+  />
+</LocalizationProvider>
+
+{/* Sunday Attendance*/}
+
+<TextField
                   fullWidth
                   variant="filled"
-                  label="Date"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.dateAttendance}
-                  name="dateAttendance"
-                  error={
-                    !!touched.dateAttendance && !!errors.dateAttendance
-                  }
-                  helperText={
-                    touched.dateAttendance && errors.dateAttendance
-                  }
-                  sx={{ gridColumn: "span 4" }}
-                />
-
-                 {/* Center Select*/}
-
-                <FormControl
-                  variant="filled"
-                  fullWidth
-                  sx={{ gridColumn: "span 4" }}
-                  error={!!touched.centerName && !!errors.centerName}
-                >
-                  <InputLabel id="center-label">Center</InputLabel>
-                  <Select
-                    labelId="center-label"
-                    id="center"
-                    value={values.centerName}
-                    onChange={(e) => {
-                      const selectedCenter = e.target.value;
-                      setFieldValue("centerName", selectedCenter);
-                     
-                    }}
-                    onBlur={handleBlur}
-                    name="centerName"
-                    label="Center"
-                  >
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    {center.map((cat) => (
-                      <MenuItem key={cat._id} value={cat.centerName}>
-                        {cat.centerName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{touched.centerName && errors.centerName}</FormHelperText>
-                </FormControl>
-
-                    
-                {/* Bacenta Select*/}
-
-                <FormControl
-                  variant="filled"
-                  fullWidth
-                  sx={{ gridColumn: "span 4" }}
-                  error={!!touched.bacentaName && !!errors.bacentaName}
-                >
-                  <InputLabel id="bacenta-label">Bacenta</InputLabel>
-                  <Select
-                    labelId="bacenta-label"
-                    id="bacenta"
-                    value={values.bacentaName}
-                    onChange={(e) => {
-                      const selectedBacenta = e.target.value;
-                      setFieldValue("bacentaName", selectedBacenta);
-                     
-                    }}
-                    onBlur={handleBlur}
-                    name="bacentaName"
-                    label="Bacenta"
-                  >
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    {bacenta.map((cat) => (
-                      <MenuItem key={cat._id} value={cat.bacentaName}>
-                        {cat.bacentaName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{touched.bacentaName && errors.bacentaName}</FormHelperText>
-                </FormControl>
-                    
-
-                {/* Zone Select
-               <FormControl
-                variant="filled"
-                fullWidth
-                sx={{ gridColumn: "span 4" }}
-                error={!!touched.zone && !!errors.zone}
-              >
-                <InputLabel id="zone-label">Zone</InputLabel>
-                <Select
-                  labelId="zone-label"
-                  id="zone"
-                  value={values.zone}
-                  onChange={(e) => {
-                    const selectedZone = e.target.value;
-                    setFieldValue('zone', selectedZone);
-                    const sku = generateID(selectedZone, values.zone);
-                    setFieldValue('bacentaID', sku);
-                  }}
-                  onBlur={handleBlur}
-                  name="zone"
-                  label="Zone"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {zone.map((cat) => (
-                    <MenuItem key={cat._id} value={cat.zoneName}>
-                      {cat.zoneName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{touched.zone && errors.zone}</FormHelperText>
-              </FormControl> */}
-
-                {/* Date Started*/}
-                {/* <DatePicker
-                label="Bacenta Date Started"
-                value={values.bacentaDateStarted}
-                onChange={(newValue) => setFieldValue("bacentaDateStarted", newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    error={!!touched.bacentaDateStarted && !!errors.bacentaDateStarted}
-                    helperText={touched.bacentaDateStarted && errors.bacentaDateStarted}
-                    fullWidth
-                  />
-                )}
-                sx={{ gridColumn: "span 4" }}
-              /> */}
-
-                {/* Bacenta Membership Number */}
-                <TextField
-                  fullWidth
-                  variant="filled"
-                  label="Bacenta Membership"
+                  label="Sunday Attendance"
                   type="number"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.bacentaMembership}
-                  name="bacentaMembership"
-                  error={
-                    !!touched.bacentaMembership && !!errors.bacentaMembership
-                  }
-                  helperText={
-                    touched.bacentaMembership && errors.bacentaMembership
-                  }
+                  value={values.sundayAttendance}
+                  name="sundayAttendance"
+                  error={!!touched.sundayAttendance && !!errors.sundayAttendance}
+                  helperText={touched.sundayAttendance && errors.sundayAttendance}
                   sx={{ gridColumn: "span 4" }}
                 />
-
+                
                 {/* Sunday Adult Attendance*/}
 
                 <TextField
@@ -401,6 +333,7 @@ const addAttendance = () => {
                   fullWidth
                   variant="filled"
                   label="Lay School Attendace"
+                  type="number"
                   onBlur={handleBlur}
                   onChange={handleChange}
                   value={values.laySchoolAttendance}
@@ -429,22 +362,7 @@ const addAttendance = () => {
                   helperText={touched.membersAbsent && errors.membersAbsent}
                   sx={{ gridColumn: "span 4" }}
                 />
-
-
-            {/*No Bacenta Meetings*/}
-                <TextField
-                  fullWidth
-                  variant="filled"
-                  label="No Bacenta Meetings"
-                  type="number"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.noBacentaMeeting}
-                  name="noBacentaMeeting"
-                  error={!!touched.noBacentaMeeting && !!errors.noBacentaMeeting}
-                  helperText={touched.noBacentaMeeting && errors.noBacentaMeeting}
-                  sx={{ gridColumn: "span 4" }}
-                />
+                 
               </Box>
 
               <Box display="flex" justifyContent="end" mt="20px">

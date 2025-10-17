@@ -33,28 +33,40 @@ const Dashboard = () => {
   const [membershipProgress, setMembershipProgress] = useState([]);
   const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
   const navigate = useNavigate(); // Initialize navigate hook
-  const { user } = useAuth();
+  //const { user } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+// ✅ Get stored values
+const storedUser = localStorage.getItem("user");
+const storedRoles = localStorage.getItem("roles");
 
-  //Checking for user Authentication
-    const role = localStorage.getItem('role');
-    const userCenter = localStorage.getItem('center');
-    
-      useEffect(() => {
-        if (!user) {
-          // Redirect to login if no user is found
-          navigate('/login');
-          setIsAuthenticated(false);
-        } else if (role !== 'administrator') {
-          navigate('/unauthorized');
-          setIsAuthenticated(false);
-        } else {
-          // User exists and has the required permission, so continue normal operation
-          setIsAuthenticated(true);
-          // Perform additional logic if needed
-        }
-      }, [user, navigate]);
-  
+const user = storedUser ? JSON.parse(storedUser) : null;
+const roles = storedRoles ? JSON.parse(storedRoles) : [];
+
+// ✅ Authentication check
+useEffect(() => {
+  if (!user) {
+    // No user → send to login
+    navigate("/login");
+    setIsAuthenticated(false);
+    return;
+  }
+
+  // Find a role with scopeType === administrator (case-insensitive)
+  const isAdmin = roles.some(
+    (r) => r.scopeType?.toLowerCase() === "administrator"
+  );
+
+  if (!isAdmin) {
+    // User exists but not administrator → block
+    navigate("/unauthorized");
+    setIsAuthenticated(false);
+    return;
+  }
+
+  // User exists and is administrator → allow
+  setIsAuthenticated(true);
+}, [user, roles, navigate]);
+
 
 // Fetch centers data
  useEffect(() => {

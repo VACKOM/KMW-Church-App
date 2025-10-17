@@ -1,9 +1,9 @@
 import { Box, Typography, useTheme, CircularProgress, Button } from "@mui/material";
-import axios from 'axios';
+import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Header from "../../components/Header";
 import Topbar from "../global/TopBar";
@@ -16,119 +16,129 @@ const Zones = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const [center, setCenter] = useState([]);
-  const [zone, setZone] = useState([]);
-  const [zonesList, setZonesList] = useState([]);
-  const [foundCenter, setFoundCenter] = useState(null);
-  const [foundZone, setFoundZone] = useState([]);
 
-  // Fetch centers data
+  const [centers, setCenters] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [filteredZones, setFilteredZones] = useState([]);
+  const [userCenterId, setUserCenterId] = useState(null);
+  const [userCenterName, setUserCenterName] = useState("All Centers");
+
+  // ✅ Fetch centers and determine user center details
   useEffect(() => {
-    const fetchCenter = async () => {
+    const fetchCenters = async () => {
       try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
-        setCenter(response.data);
+        const { data } = await axios.get(
+          "https://church-management-system-39vg.onrender.com/api/centers/"
+        );
+        setCenters(data);
 
-        const centerIdFromStorage = localStorage.getItem('center');
+        // ✅ Get stored roles
+        const roleData = localStorage.getItem("roles");
+        const roleAssignments = roleData ? JSON.parse(roleData) : [];
 
-        if (centerIdFromStorage === "677d685033b4dc057ccc4585") {
-          setFoundCenter({ centerName: "ALL" });
+        // ✅ Identify CenterLeader
+        const centerLeader = roleAssignments.find(
+          (role) => role.scopeType === "CenterLeader"
+        );
+
+        if (centerLeader) {
+          const centerScopeItem = centerLeader.scopeItem; // _id of the center
+          setUserCenterId(centerScopeItem);
+
+          // ✅ Find center name for the heading
+          const matchedCenter = data.find((c) => c._id === centerScopeItem);
+          if (matchedCenter) {
+            setUserCenterName(matchedCenter.centerName);
+          } else {
+            setUserCenterName("Unknown Center");
+          }
         } else {
-          const matchedCenter = response.data.find(item => item._id === centerIdFromStorage);
-          setFoundCenter(matchedCenter || null);
+          // ✅ Global user (can see all)
+          setUserCenterId("ALL");
+          setUserCenterName("All Centers");
         }
-      } catch (error) {
+      } catch (err) {
         setError("Error fetching centers");
-        console.error("Error fetching center:", error);
+        console.error("Error fetching centers:", err);
       }
     };
 
-    fetchCenter();
+    fetchCenters();
   }, []);
 
-  // Fetch zone data based on center
+  // ✅ Fetch zones and filter by center _id
   useEffect(() => {
-    if (foundCenter?.centerName) {
-      const fetchZone = async () => {
-        try {
-          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-          setZone(response.data);
+    const fetchZones = async () => {
+      try {
+        const { data } = await axios.get(
+          "https://church-management-system-39vg.onrender.com/api/zones/"
+        );
+        setZones(data);
 
-          if (foundCenter.centerName === "ALL") {
-            setFoundZone(response.data);
-          } else {
-            const filteredZones = response.data.filter(
-              item => item.center === foundCenter.centerName
-            );
-            setFoundZone(filteredZones);
-          }
-
-        } catch (error) {
-          setError("Error fetching zones");
-          console.error("Error fetching zone:", error);
+        if (userCenterId === "ALL") {
+          setFilteredZones(data);
+        } else if (userCenterId) {
+          const matchedZones = data.filter((z) => z.center === userCenterId);
+          setFilteredZones(matchedZones);
         }
-      };
+      } catch (err) {
+        setError("Error fetching zones");
+        console.error("Error fetching zones:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      fetchZone();
-    }
-  }, [foundCenter]);
-
-  // Update loading state when zones are fetched
-  useEffect(() => {
-    if (foundZone) {
-      setLoading(false);
-    }
-  }, [foundZone]);
-
-  const handleAddButtonClick = () => {
-    navigate("/add-zone", { state: { foundCenter } });
-  };
+    if (userCenterId) fetchZones();
+  }, [userCenterId]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
   };
 
-  // Transform zone data
-  useEffect(() => {
-    if (foundZone) {
-      const combinedData = foundZone.map((zone, index) => ({
-        id: zone.zoneID || zone._id,
-        zoneName: zone.zoneName,
-        zoneLeader: zone.zoneLeader,
-        zoneContact: zone.zoneContact,
-        zoneEmail: zone.zoneEmail,
-        center: zone.center
-      }));
-      setZonesList(combinedData);
-    }
-  }, [foundZone]);
+  const handleAddButtonClick = () => {
+    const matchedCenter = centers.find((c) => c._id === userCenterId) || null;
+    navigate("/add-zone", { state: { foundCenter: matchedCenter } });
+  };
 
-  const finalZones = zonesList.filter(zones => {
-    const query = searchQuery.toLowerCase();
+  // ✅ Filter zones based on search query
+  const finalZones = filteredZones.filter((zone) => {
+    const q = searchQuery.toLowerCase();
     return (
-      (zones.zoneName?.toLowerCase()?.includes(query)) ||
-      (zones.zoneLeader?.toLowerCase()?.includes(query)) ||
-      (zones.zoneContact?.toLowerCase()?.includes(query)) ||
-      (zones.zoneEmail?.toLowerCase()?.includes(query))
+      zone.zoneName?.toLowerCase().includes(q) ||
+      zone.zoneLeader?.toLowerCase().includes(q) ||
+      zone.zoneContact?.toLowerCase().includes(q) ||
+      zone.zoneEmail?.toLowerCase().includes(q) ||
+      zone.center?.toLowerCase().includes(q) // still searchable by center _id
     );
   });
 
   const columns = [
     { field: "id", headerName: "Zone ID", flex: 1 },
-    { field: "zoneName", headerName: "Zone Name", flex: 1, editable: true },
-    { field: "zoneLeader", headerName: "Zone Leader", flex: 1, editable: true },
-    { field: "zoneContact", headerName: "Zone Contact", flex: 1, editable: true },
-    { field: "zoneEmail", headerName: "Zone Email", flex: 1, editable: true }
+    { field: "zoneName", headerName: "Zone Name", flex: 1 },
+    { field: "zoneLeader", headerName: "Zone Leader", flex: 1 },
+    { field: "zoneContact", headerName: "Zone Contact", flex: 1 },
+    { field: "zoneEmail", headerName: "Zone Email", flex: 1 },
+    { field: "center", headerName: "Center ID", flex: 1 }, // ✅ still shows _id
   ];
+
+  const rows = finalZones.map((z) => ({
+    id: z.zoneID || z._id,
+    zoneName: z.zoneName,
+    zoneLeader: z.zoneLeader,
+    zoneContact: z.zoneContact,
+    zoneEmail: z.zoneEmail,
+    center: z.center, // remains the _id
+  }));
 
   return (
     <Box m="20px">
       <Topbar onSearch={handleSearch} />
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
+        {/* ✅ Heading now shows centerName */}
         <Header
-          title={`${foundCenter?.centerName || "All"} Zones List`}
+          title={`${userCenterName} Zones List`}
           subtitle="Managing the Zones"
         />
         <Box display="flex" justifyContent="flex-end" gap="10px">
@@ -143,13 +153,17 @@ const Zones = () => {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Typography color="error" variant="h6" align="center">{error}</Typography>
-      ) : finalZones.length === 0 ? (
-        <Typography align="center" mt={4}>No zones available.</Typography>
+        <Typography color="error" variant="h6" align="center">
+          {error}
+        </Typography>
+      ) : rows.length === 0 ? (
+        <Typography align="center" mt={4}>
+          No zones available.
+        </Typography>
       ) : (
         <Box m="40px 0 0 0" height="75vh">
           <DataGrid
-            rows={finalZones}
+            rows={rows}
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}

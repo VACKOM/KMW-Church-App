@@ -24,52 +24,82 @@ const Bacentas = ({}) => {
   const [foundCenter, setFoundCenter] = useState([]);
   const [foundZone, setFoundZone] = useState([]);
   
-  const userRole = localStorage.getItem('role');
+  const [filteredZones, setFilteredZones] = useState([]);
+  const [userCenterId, setUserCenterId] = useState(null);
+  const [userCenterName, setUserCenterName] = useState("All Centers");
+
 
   // Fetch centers
+  // ✅ Fetch centers and determine user center details
   useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/centers/');
-        setCenters(response.data);
-        setFoundCenter(response.data.find(item => item._id === localStorage.getItem('center'))); // Set foundCenter
-        setLoading(false);  // Data is loaded
-       
-      } catch (error) {
-        console.error('Error fetching centers:', error);
-        setError('Failed to load centers or no centers available');
-        setLoading(false);  // Data loading is done, but there was an error
+        const { data } = await axios.get(
+          "https://church-management-system-39vg.onrender.com/api/centers/"
+        );
+        setCenters(data);
+
+        // ✅ Get stored roles
+        const roleData = localStorage.getItem("roles");
+        const roleAssignments = roleData ? JSON.parse(roleData) : [];
+
+        // ✅ Identify CenterLeader
+        const centerLeader = roleAssignments.find(
+          (role) => role.scopeType === "CenterLeader"
+        );
+console.log(centerLeader.scopeType);
+
+        if (centerLeader) {
+          const centerScopeItem = centerLeader.scopeItem; // _id of the center
+          setUserCenterId(centerScopeItem);
+
+          // ✅ Find center name for the heading
+          const matchedCenter = data.find((c) => c._id === centerScopeItem);
+          if (matchedCenter) {
+            setUserCenterName(matchedCenter.centerName);
+          } else {
+            setUserCenterName("Unknown Center");
+          }
+        } else {
+          // ✅ Global user (can see all)
+          setUserCenterId("ALL");
+          setUserCenterName("All Centers");
+        }
+      } catch (err) {
+        setError("Error fetching centers");
+        console.error("Error fetching centers:", err);
       }
     };
+
     fetchCenters();
   }, []);
 
 
   // Fetch zone data based on center
   useEffect(() => {
-    if (foundCenter?.centerName) {
-      const fetchZone = async () => {
-        try {
-          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-          setZones(response.data);
-          // Filter zones based on the centerName
-          const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
-          setFoundZone(filteredZones); // Set zones that match the centerName
-        } catch (error) {
-          setError("Error fetching zones");
-          console.error("Error fetching zone:", error);
-        }
-      };
-      fetchZone();
-    }
-  }, [foundCenter]); // Trigger fetchZone when foundCenter changes
+    const fetchZones = async () => {
+      try {
+        const { data } = await axios.get(
+          "https://church-management-system-39vg.onrender.com/api/zones/"
+        );
+        setZones(data);
 
-  // Set loading state to false when data is loaded
-  useEffect(() => {
-    if (foundZone && foundZone.length > 0) {
-      setLoading(false); // Data has been fetched
-    }
-  }, [foundZone]);
+        if (userCenterId === "ALL") {
+          setFilteredZones(data);
+        } else if (userCenterId) {
+          const matchedZones = data.filter((z) => z.center === userCenterId);
+          setFilteredZones(matchedZones);
+        }
+      } catch (err) {
+        setError("Error fetching zones");
+        console.error("Error fetching zones:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userCenterId) fetchZones();
+  }, [userCenterId]);
 
 
   // Fetch bacentas
@@ -140,8 +170,8 @@ const Bacentas = ({}) => {
     const query = searchQuery.toLowerCase(); // Normalize the search query
   
     // Check if userRole is "center" and filter accordingly
-    if (userRole === "center") {
-      const centerId = localStorage.getItem('center'); // Get the centerId from local storage
+    if (centerLeader.scopeType === "CenterLeader") {
+      const centerId = centerLeader.scopeItem; // Get the centerId from local storage
       
       // Find the center based on the centerId
       const searchCenter = centers.find(center => center._id === centerId); // Find the center object
@@ -155,8 +185,8 @@ const Bacentas = ({}) => {
         return false;
       }
     }
-    else if (userRole === "zone") {
-      const zoneId = localStorage.getItem('zone'); // Get the centerId from local storage
+    else if (centerLeader.scopeType === "ZoneLeader") {
+      const zoneId = zoneLeader.scopeItem; // Get the centerId from local storage
       
       // Find the center based on the centerId
       const searchZone = zones.find(zone => zone._id === zoneId); // Find the center object
@@ -172,7 +202,7 @@ const Bacentas = ({}) => {
     }
 
     else if (userRole === "bacenta") {
-      const bacentaId = localStorage.getItem('bacenta'); // Get the centerId from local storage
+      const bacentaId = centerLeader.scopeItem;; // Get the centerId from local storage
       
       // Find the center based on the centerId
       const searchBacenta = bacentas.find(bacenta => bacenta._id === bacentaId); // Find the center object

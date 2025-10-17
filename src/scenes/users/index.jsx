@@ -4,233 +4,187 @@ import { tokens } from "../../theme";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-import Topbar from "../global/TopBar";  // Import your Topbar component
+import { useNavigate } from "react-router-dom";
+import Topbar from "../global/TopBar";
 
-const Users = ({}) => {
+const Users = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
   const [users, setUsers] = useState([]);
   const [usersList, setUsersList] = useState([]);
-  const [loading, setLoading] = useState(true); // Add a loading state
-  const [error, setError] = useState(null); // Add an error state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [centers, setCenters] = useState([]);
-  const [bacentas, setBacentas] = useState([]);
   const [zones, setZones] = useState([]);
+  const [bacentas, setBacentas] = useState([]);
+  const [picturePath, setPicturePath] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const navigate = useNavigate(); // Initialize the navigate function
-  const[picturePath,setPicturePath]= useState([]);
+  const navigate = useNavigate();
 
   // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/users/');
-        setUsers(response.data);
-        console.log(response.data);
-        setLoading(false);  // Data is loaded
-       
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setError('Failed to load users or no users available');
-        setLoading(false);  // Data loading is done, but there was an error
+        const { data } = await axios.get('https://church-management-system-39vg.onrender.com/api/users/');
+        setUsers(data || []);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Failed to load users');
+      } finally {
+        setLoading(false);
       }
     };
     fetchUsers();
   }, []);
 
-  // Fetch centers
+  // Fetch centers, zones, bacentas in parallel
   useEffect(() => {
-    const fetchCenters = async () => {
+    const fetchAll = async () => {
       try {
-        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/centers/');
-        setCenters(response.data);
-        setLoading(false);  // Data is loaded
-       
-      } catch (error) {
-        console.error('Error fetching centers:', error);
-        setError('Failed to load centers or no centers available');
-        setLoading(false);  // Data loading is done, but there was an error
+        const [cRes, zRes, bRes] = await Promise.all([
+          axios.get('https://church-management-system-39vg.onrender.com/api/centers/'),
+          axios.get('https://church-management-system-39vg.onrender.com/api/zones/'),
+          axios.get('https://church-management-system-39vg.onrender.com/api/bacentas/')
+        ]);
+        setCenters(cRes.data || []);
+        setZones(zRes.data || []);
+        setBacentas(bRes.data || []);
+      } catch (err) {
+        console.error("Error fetching location data:", err);
+        setError("Failed to load centers/zones/bacentas");
       }
     };
-    fetchCenters();
+    fetchAll();
   }, []);
 
-  
-  // Fetch zones
+  // Fetch pictures
   useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-        setZones(response.data);
-        setLoading(false);  // Data is loaded
-       
-       
-      } catch (error) {
-        console.error('Error fetching zones:', error);
-        setError('Failed to load zones or no zones available');
-        setLoading(false);  // Data loading is done, but there was an error
-      }
-    };
-    fetchZones();
-  }, []);
-
-  // Fetch bacentas
-  useEffect(() => {
-    const fetchBacentas = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-        setBacentas(response.data);
-        setLoading(false);  // Data is loaded
-       
-       
-      } catch (error) {
-        console.error('Error fetching bacentas:', error);
-        setError('Failed to load bacentas or no bacentas available');
-        setLoading(false);  // Data loading is done, but there was an error
-      }
-    };
-    fetchBacentas();
-  }, []);
-  
-  
-
-
-const All= "0000";
-  // Fetch Picture path
-
-  useEffect(() => {
-    
     const fetchPicPath = async () => {
       try {
-        // Ensure UserContact is available, and pass it correctly in the API request
-        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/pictures/${All}`);
-        setPicturePath(response.data); // Adjust according to your API response
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+        const { data } = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/pictures/0000`);
+        setPicturePath(data || []);
+      } catch (err) {
+        console.error("Error fetching user pictures:", err);
       }
     };
-  
     fetchPicPath();
-  }, [All]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
+  }, []);
 
-  //console.log(picturePath.fileUrl);
- 
+  // Combine data when all pieces are available
+
   useEffect(() => {
-    if (users.length > 0 && picturePath.length > 0) {
-      const combinedData = users.map((user) => {
-        const userPicture = picturePath.find(pic => pic.originalName === user.userContact);
-        const profileImagePath = userPicture ? userPicture.fileUrl : 'path/to/default/image.jpg'; 
+    if (!users.length || !centers.length || !zones.length || !bacentas.length) return;
   
-        const userCenter = centers.find(center => center._id === user.centerId);
-        const centerName = userCenter ? userCenter.centerName : "N/A";
-
-        const userZone = zones.find(zone => zone._id === user.zoneId);
-        const zoneName = userZone ? userZone.zoneName : "N/A";
-
-        const userBacenta = bacentas.find(bacenta => bacenta._id === user.bacentaId);
-        const bacentaName = userBacenta? userBacenta.bacentaName : "N/A";
-
-        //console.log(bacentas);
+    const combinedData = users.map(user => {
+      const userPic = picturePath.find(pic => pic.originalName === user.userContact);
+      const profileImagePath = userPic ? userPic.fileUrl : 'path/to/default.jpg';
   
-        return {
-          ID: user._id,
-          id: user._id,
-          username: user.username,
-          userName: user.userName,
-          contact: user.userContact,
-          role: user.role,
-          center: centerName,  // Display name only
-          zone: zoneName,
-          bacenta: bacentaName,
-          profileImagePath: profileImagePath
-        };
-      });
+      let roleNames = [];
+      let centerNames = [];
+      let zoneNames = [];
+      let bacentaNames = [];
   
-      setUsersList(combinedData);
-    }
-  }, [users, picturePath, centers]);
+      if (Array.isArray(user.roleAssignments)) {
+        user.roleAssignments.forEach(role => {
+          switch (role.scopeType) {
+            case "CenterLeader":
+              roleNames.push("Center Leader");
+              const foundCenter = centers.find(ct => ct._id === role.scopeItem);
+              if (foundCenter && !centerNames.includes(foundCenter.centerName)) {
+                centerNames.push(foundCenter.centerName);
+              }
+              break;
+            case "ZoneLeader":
+              roleNames.push("Zone Leader");
+              const foundZone = zones.find(zz => zz._id === role.scopeItem);
+              if (foundZone && !zoneNames.includes(foundZone.zoneName)) {
+                zoneNames.push(foundZone.zoneName);
+              }
+              break;
+            case "BacentaLeader":
+              roleNames.push("Bacenta Leader");
+              const foundBacenta = bacentas.find(bt => bt._id === role.scopeItem);
+              if (foundBacenta && !bacentaNames.includes(foundBacenta.bacentaName)) {
+                bacentaNames.push(foundBacenta.bacentaName);
+              }
+              break;
+            default:
+              break;
+          }
+        });
+      }
+  
+      return {
+        ID: user._id,
+        id: user._id,
+        username: user.username,
+        userName: user.userName,
+        contact: user.userContact,
+        role: roleNames.length ? roleNames.join(", ") : "N/A",
+        center: centerNames.length ? centerNames.join(", ") : "N/A",
+        zone: zoneNames.length ? zoneNames.join(", ") : "N/A",
+        bacenta: bacentaNames.length ? bacentaNames.join(", ") : "N/A",
+        profileImagePath
+      };
+    });
+  
+    console.log("Combined User Data:", combinedData); // ✅ Full user role mapping
+  
+    setUsersList(combinedData);
+  }, [users, picturePath, centers, zones, bacentas]);
+  
+  
   
 
-  // Button Add New User click handler
-  const handleAddButtonClick = () => {
-    navigate("/add-user");
-  };
+  const handleAddButtonClick = () => navigate("/add-user");
+  const handleSearch = (q) => setSearchQuery(q);
 
-    // Button Add New Target click handler
-
-
-  const handleSearch = (query) => {
-    setSearchQuery(query); // Update the search query state 
-  };
-
-  // Filter users based on the search query
-  const filteredUsers = usersList.filter(user => {
-    const query = searchQuery.toLowerCase(); // Normalize the search query
+  const filteredUsers = usersList.filter(u => {
+    const q = searchQuery.toLowerCase();
     return (
-      user.username.toLowerCase().includes(query) ||
-      user.role.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) 
-
-     
+      u.username?.toLowerCase().includes(q) ||
+      u.role?.toLowerCase().includes(q) ||
+      u.contact?.toLowerCase().includes(q)
     );
   });
- 
 
-  // Columns for DataGrid with editable fields
   const columns = [
-    //{ field: "id", headerName: "User ID", editable: false },
     {
-      field: "profileImagePath", 
-      headerName: "Profile Image", 
-      flex: 1, 
-      editable: true,
-      renderCell: (params) => {
-        return (
-          <Box display="flex" justifyContent="center" alignItems="center">
-            <img
-              src={params.value} 
-              alt="Profile" 
-              style={{
-                width: 50,  // Set width as per your need
-                height: 50, // Set height as per your need
-                borderRadius: '50%', // Make the image circular
-                objectFit: 'cover'  // Ensure the image covers the space without distortion
-              }}
-            />
-          </Box>
-        );
-      }
+      field: "profileImagePath",
+      headerName: "Profile",
+      flex: 1,
+      renderCell: (params) => (
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <img
+            src={params.value}
+            alt="Profile"
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              objectFit: 'cover'
+            }}
+          />
+        </Box>
+      )
     },
-    { field: "username", headerName: "User Name", flex: 1, editable: true },
-    { field: "role", headerName: "User Role", flex: 1, editable: true },
-    { field: "center", headerName: "User Center", flex: 1, editable: true },
-    { field: "zone", headerName: "User Zone", flex: 1, editable: true },
-    { field: "bacenta", headerName: "User Bacenta", flex: 1, editable: true },
-    { field: "contact", headerName: "User Contact", flex: 1, editable: true }
+    { field: "username", headerName: "User Name", flex: 1 },
+    { field: "role", headerName: "Roles", flex: 1 },
+    { field: "center", headerName: "Center", flex: 1 },
+    { field: "zone", headerName: "Zone", flex: 1 },
+    { field: "bacenta", headerName: "Bacenta", flex: 1 },
+    { field: "contact", headerName: "Contact", flex: 1 }
   ];
-  
-
-
 
   return (
     <Box m="20px">
-      <Box>
-        <Topbar onSearch={handleSearch} /> 
-      </Box>
-
+      <Topbar onSearch={handleSearch} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="Users List" subtitle="Managing the Users" />
-        <Box display="flex" justifyContent="flex-end" gap="10px">
-          <Button
-            variant="contained"
-            color="neutral"
-            onClick={handleAddButtonClick}
-          >
-            Add New User
-          </Button>
-
-        </Box>
+        <Button variant="contained" color="neutral" onClick={handleAddButtonClick}>
+          Add New User
+        </Button>
       </Box>
 
       {loading ? (
@@ -241,12 +195,7 @@ const All= "0000";
         <Typography color="error" variant="h6" align="center">{error}</Typography>
       ) : (
         <Box m="40px 0 0 0" height="75vh">
-          <DataGrid 
-            //checkboxSelection 
-            rows={filteredUsers} 
-            columns={columns} 
-        
-          />
+          <DataGrid rows={filteredUsers} columns={columns} />
         </Box>
       )}
     </Box>
@@ -254,4 +203,3 @@ const All= "0000";
 };
 
 export default Users;
-

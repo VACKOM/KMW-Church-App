@@ -1,75 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
-import { useNavigate, useLocation } from "react-router-dom"; // Import the useNavigate hook
+import { useNavigate, useLocation } from "react-router-dom";
 
-// Validation Schema
+// ✅ Validation Schema
 const zoneSchema = yup.object().shape({
- 
-    zoneID: yup.string(),
-    zoneName: yup.string().required("Zone name is required"),
-    zoneLeader: yup.string().required("Zone Leader's name is required"),
-    zoneContact: yup.string().required("Zone contact is required"),
-    zoneEmail: yup.string().required("Zone email is required"),
+  zoneID: yup.string(),
+  zoneName: yup.string().required("Zone name is required"),
+  zoneLeader: yup.string().required("Zone Leader's name is required"),
+  zoneContact: yup.string().required("Zone contact is required"),
+  zoneEmail: yup.string().required("Zone email is required"),
+  center: yup.string().required("Center is required"),
 });
 
 const Zone = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
-
-
-
-  // State hooks to hold data
-  const [center, setCenter] = useState([]);
-  const [foundedCenter, setFoundedCenter] = useState([]);
-  const navigate = useNavigate(); // Initialize the navigate function
-
-  // Correct way to use useLocation
+  const navigate = useNavigate();
   const location = useLocation();
-  const { foundCenter: receivedCenter } = location.state || {}; // Destructure foundCenter from location.state, or default to empty object
- 
-  useEffect(() => {
-    if (receivedCenter) {
-      setFoundedCenter(receivedCenter.centerName); // Set the foundCenter when it's available
-      
-    }
-  }, [receivedCenter]);
 
-  // Fetch centers data
+  // ✅ Get center passed from previous page (if any)
+  const { foundCenter: receivedCenter } = location.state || {};
+
+  const [centers, setCenters] = useState([]);
+
+  // ✅ Fetch all centers (only needed if you may use them for display)
   useEffect(() => {
-    const fetchCenter = async () => {
+    const fetchCenters = async () => {
       try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
-        setCenter(response.data); // Adjust according to your API response
+        const response = await axios.get(
+          "https://church-management-system-39vg.onrender.com/api/centers/"
+        );
+        setCenters(response.data);
       } catch (error) {
-        console.error("Error fetching center:", error);
+        console.error("Error fetching centers:", error);
       }
     };
-    fetchCenter();
+    fetchCenters();
   }, []);
 
+  // ✅ Generate Zone ID
+  const randomNum = Math.floor(Math.random() * 1000);
+  const generateID = `ZON/${randomNum}`;
 
-const savedCenter = foundedCenter;
-
- // SKU generation logic (zone, random number)
-
-const randomNum = Math.floor(Math.random() * 1000);
-const generateID = `ZON/${randomNum}`;
-
-
-
-  // Handle form submission
+  // ✅ Form Submit Handler
   const handleSubmit = async (values) => {
     try {
-      const response = await axios.post('https://church-management-system-39vg.onrender.com/api/zones/', values);
-      alert('Zone registered successfully!');
+      console.log("Submitting:", values);
+      await axios.post("http://localhost:8080/api/zones/", values);
+      alert("Zone registered successfully!");
       navigate("/zones");
     } catch (error) {
-      console.error('There was an error registering the zone!', error);
-      alert('Error registering zone');
+      console.error("Error registering zone:", error);
+      alert("Error registering zone");
     }
   };
 
@@ -80,13 +66,12 @@ const generateID = `ZON/${randomNum}`;
       <Formik
         initialValues={{
           zoneID: generateID,
-          zoneName: '',
-          zoneLeader: '',
-          zoneContact: '',
-          zoneEmail: '',
-          center: savedCenter
-         
-
+          zoneName: "",
+          zoneLeader: "",
+          zoneContact: "",
+          zoneEmail: "",
+          // ✅ Save only the center _id (hidden)
+          center: receivedCenter ? receivedCenter._id : "",
         }}
         validationSchema={zoneSchema}
         onSubmit={handleSubmit}
@@ -98,9 +83,11 @@ const generateID = `ZON/${randomNum}`;
           handleBlur,
           handleChange,
           handleSubmit,
-          setFieldValue
         }) => (
           <form onSubmit={handleSubmit}>
+            {/* ✅ Hidden input to keep center _id */}
+            <input type="hidden" name="center" value={values.center} />
+
             <Box
               display="grid"
               gap="30px"
@@ -109,53 +96,17 @@ const generateID = `ZON/${randomNum}`;
                 "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
               }}
             >
-              {/* Zone ID Text Field */}
+              {/* Zone ID (Auto-generated, disabled) */}
               <TextField
                 fullWidth
                 variant="filled"
                 label="Zone ID"
-                onBlur={handleBlur}
                 value={values.zoneID}
                 name="zoneID"
-                error={!!touched.zoneID && !!errors.zoneID}
-                helperText={touched.zoneID && errors.zoneID}
-                sx={{ gridColumn: "span 4" }}
+                onBlur={handleBlur}
                 disabled
-              />
-
-                  {/* Center Select
-                  <FormControl
-                variant="filled"
-                fullWidth
                 sx={{ gridColumn: "span 4" }}
-                error={!!touched.center && !!errors.center}
-              >
-                <InputLabel id="center-label">Center</InputLabel>
-                <Select
-                  labelId="center-label"
-                  id="center"
-                  value={values.center}
-                  onChange={(e) => {
-                    const selectedCenter = e.target.value;
-                    setFieldValue('center', selectedCenter);
-                    const sku = generateID(selectedCenter, values.center);
-                    setFieldValue('zoneID', sku);
-                  }}
-                  onBlur={handleBlur}
-                  name="center"
-                  label="Center"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {center.map((cat) => (
-                    <MenuItem key={cat._id} value={cat.centerName}>
-                      {cat.centerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{touched.center && errors.center}</FormHelperText>
-              </FormControl> */}
+              />
 
               {/* Zone Name */}
               <TextField
@@ -185,8 +136,8 @@ const generateID = `ZON/${randomNum}`;
                 sx={{ gridColumn: "span 4" }}
               />
 
-                {/* Zone Contact*/}
-                <TextField
+              {/* Zone Contact */}
+              <TextField
                 fullWidth
                 variant="filled"
                 label="Zone Contact"
@@ -199,8 +150,8 @@ const generateID = `ZON/${randomNum}`;
                 sx={{ gridColumn: "span 4" }}
               />
 
-               {/* Zone Email */}
-               <TextField
+              {/* Zone Email */}
+              <TextField
                 fullWidth
                 variant="filled"
                 label="Zone Email"
@@ -212,8 +163,6 @@ const generateID = `ZON/${randomNum}`;
                 helperText={touched.zoneEmail && errors.zoneEmail}
                 sx={{ gridColumn: "span 4" }}
               />
-
-             
             </Box>
 
             <Box display="flex" justifyContent="end" mt="20px">

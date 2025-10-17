@@ -41,55 +41,54 @@ const Zone = () => {
   const { user } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-//Checking for user Authentication
-const role = localStorage.getItem('role');
-const userCenter = localStorage.getItem('center');
-const userZone = localStorage.getItem('zone');
+  const storedRoles = localStorage.getItem('roles');
+  const parsedRoles = storedRoles ? JSON.parse(storedRoles) : [];
+  const ZoneScopeItem = parsedRoles.find(item => item.scopeType === "ZoneLeader")?.scopeItem || null;
+
+  const isZoneLeader = parsedRoles.some(role => role.scopeType === "ZoneLeader");
 
 
+
+ // Redirect unauthorized users
   useEffect(() => {
     if (!user) {
-      // Redirect to login if no user is found
       navigate('/login');
-      setIsAuthenticated(false);
-    } else if (role !== 'zone') {
+    } else if (!isZoneLeader) {
       navigate('/unauthorized');
-      setIsAuthenticated(false);
-    } else {
-      // User exists and has the required permission, so continue normal operation
-      setIsAuthenticated(true);
-      // Perform additional logic if needed
     }
-  }, [user, navigate]);
+  }, [user, navigate, isZoneLeader]);
   
   
 
-// Fetch centers data
- useEffect(() => {
-    const fetchCenter = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
-        setCenter(response.data); // Adjust according to your API response
-        setFoundCenter(response.data.find(item => item._id === userCenter)); // Find the center by _id
+// // Fetch centers data
+//  useEffect(() => {
+//     const fetchCenter = async () => {
+//       try {
+//         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
+//         setCenter(response.data); // Adjust according to your API response
+//         setFoundCenter(response.data.find(item => item._id === userCenter)); // Find the center by _id
         
-      } catch (error) {
-        console.error("Error fetching center:", error);
-      }
-    };
-    fetchCenter();
-  }, []);
+//       } catch (error) {
+//         console.error("Error fetching center:", error);
+//       }
+//     };
+//     fetchCenter();
+//   }, []);
 
 
  // Fetch zones data
 
  useEffect(() => {
+  if (!ZoneScopeItem) return;
    const fetchZone = async () => {
      try {
-       const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-       setZone(response.data); // Adjust according to your API response
 
-       setFoundZone(response.data.find(item => item._id === userZone)); // Find the center by _i
-       
+      const { data } = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
+        setZone(data);
+
+        const matched = data.find(b => b._id === ZoneScopeItem);
+        setFoundZone(matched || null);
+       // console.log("Matched Zone:", matched);
      } catch (error) {
        console.error("Error fetching zone:", error);
      }

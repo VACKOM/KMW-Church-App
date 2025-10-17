@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Box, Button, TextField, CircularProgress, Typography, Paper, useTheme } from '@mui/material';
 import { Formik } from 'formik';
 import * as yup from 'yup';
@@ -12,48 +11,48 @@ const Login = () => {
   const { login } = useAuth();
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null); // To store error message
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  // Validation Schema
+  // ✅ Validation Schema
   const userSchema = yup.object().shape({
     username: yup.string().required("Username is required"),
-    password: yup.string().required("Password is required")
+    password: yup.string().required("Password is required"),
   });
 
-  // Handle login submission
-  const handleSubmit = async (values) => {
+  // ✅ Custom submit handler (renamed to avoid shadowing Formik's handleSubmit)
+  const onFormSubmit = async (values) => {
     setIsLoading(true);
-    setError(null); // Reset error message on new submit attempt
+    setError(null);
+    console.log("Attempting login with:", values);
 
     try {
-      // Assuming the login function sends the request
+      // Make sure backend expects 'username' (or change to email if needed)
       await login(values.username, values.password);
-     
+      // If login is successful, AuthContext usually handles navigation
+      // but you can also navigate here if needed:
+      // navigate('/dashboard');
     } catch (error) {
-     // Check if the error is from the server and has a response
-    
-    if (error.response) {
-      if (error.response.status === 400) {
-        setError("Incorrect username or password");  // Unauthorized (wrong credentials)
-      } else if (error.response.status === 500) {
-        setError("Server error. Please try again later.");  // Internal server error
+      if (error.response) {
+        if (error.response.status === 400) {
+          setError("Incorrect username or password");
+        } else if (error.response.status === 500) {
+          setError("Server error. Please try again later.");
+        } else {
+          setError("An unexpected error occurred. Please try again.");
+        }
       } else {
-        setError("An unexpected error occurred. Please try again.");  // Catch other errors
+        setError("Network error. Please check your connection.");
       }
-    } else {
-      // If no response (e.g., network error)
-      setError("Network error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);  // Stop the loading indicator
-  }
   };
 
   return (
-    <Box 
+    <Box
       display="flex"
       justifyContent="center"
       alignItems="center"
@@ -87,7 +86,7 @@ const Login = () => {
         <Formik
           initialValues={{ username: '', password: '' }}
           validationSchema={userSchema}
-          onSubmit={handleSubmit} // Use Formik's onSubmit
+          onSubmit={onFormSubmit}   // ✅ Use the renamed function
         >
           {({
             values,
@@ -95,19 +94,15 @@ const Login = () => {
             touched,
             handleBlur,
             handleChange,
-            handleSubmit,
+            handleSubmit, // ✅ This is Formik's handleSubmit
           }) => (
             <form onSubmit={handleSubmit}>
-              <Box
-                display="flex"
-                flexDirection="column"
-                gap="20px"
-              >
+              <Box display="flex" flexDirection="column" gap="20px">
                 <TextField
                   variant="outlined"
                   label="Username"
-                  value={values.username}
                   name="username"
+                  value={values.username}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!touched.username && !!errors.username}
@@ -118,8 +113,8 @@ const Login = () => {
                   type="password"
                   variant="outlined"
                   label="Password"
-                  value={values.password}
                   name="password"
+                  value={values.password}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!touched.password && !!errors.password}
@@ -132,10 +127,10 @@ const Login = () => {
                 {isLoading ? (
                   <CircularProgress />
                 ) : (
-                  <Button 
-                    type="submit" 
-                    variant="contained" 
-                    color="primary" 
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
                     fullWidth
                   >
                     Login
@@ -151,4 +146,3 @@ const Login = () => {
 };
 
 export default Login;
-

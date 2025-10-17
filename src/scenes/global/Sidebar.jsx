@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
+import { Box, IconButton, Typography, useTheme, useMediaQuery ,Accordion,AccordionSummary,AccordionDetails,} from "@mui/material";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "react-pro-sidebar/dist/css/styles.css";
@@ -20,6 +20,12 @@ import UserProfileOutlinedIcon from '@mui/icons-material/AccountBox';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ZoneOutlinedIcon from '@mui/icons-material/Grain';
 
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AdminAccordionMenu from '../../components/sideBarMenu/AdminAccordionMenu.jsx'
+import CenterAccordionMenu from '../../components/sideBarMenu/CenterAccordionMenu.jsx'
+import BacentaAccordionMenu from "../../components/sideBarMenu/BacentaAccordionMenu.jsx";
+import ZoneAccordionMenu from '../../components/sideBarMenu/ZoneAccordionMenu.jsx'
+import { fetchScopeDetails } from "../../utils/fetchScopeDetails.js";
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
   const theme = useTheme();
@@ -42,26 +48,39 @@ const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
   );
 };
 
-const Sidebar = ({ userRole }) => {
+const Sidebar = ({ roleAssignments }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const[user,setUser]= useState([]);
+  const [user, setUser] = useState({});
   const[zone,setZone]= useState([]);
   const[center,setCenter]= useState([]);
   const[bacenta,setBacenta]= useState([]);
   const[picturePath,setPicturePath]= useState([]);
 
-  const userId = localStorage.getItem('userId');
-  const zoneId = localStorage.getItem('zone');
-  const centerId = localStorage.getItem('center');
-  const bacentaId = localStorage.getItem('bacenta');
+  // Get the stored string
+const storedUser = localStorage.getItem('user');
+
+// Convert it to an object
+const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+// Safely grab the id
+const userId = parsedUser?.id;
+
+//console.log(userId); // -> "68c2a7ee251ee8ff7232110a"
+  // const zoneId = localStorage.getItem('zone');
+  // const centerId = localStorage.getItem('center');
+  // const bacentaId = localStorage.getItem('bacenta');
   const navigate = useNavigate(); // Get the navigate function
-  const role = localStorage.getItem('role');
+  //const role = localStorage.getItem('role');
   const { logout } = useAuth();  // Accessing logout function from context
-  
+  // console.log(roleAssignments)
+  // console.log(roleAssignments[0].scopeType)
+  const scopeItems = roleAssignments.map(r => r.scopeItem);
+
+  //console.log("All scope items:", scopeItems);
 
   // Fetch User data
 
@@ -70,6 +89,7 @@ const Sidebar = ({ userRole }) => {
       try {
         const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/${userId}`);
         setUser(response.data); // Adjust according to your API response
+        //console.log("User detail", response.data)
       } catch (error) {
         console.error("Error fetching user:", error);
       }
@@ -80,70 +100,82 @@ const Sidebar = ({ userRole }) => {
   //const UserPicture = user.profileImagePath;
 
   // Fetch Zone data
+  
 
-  useEffect(() => {
-    const fetchZone= async () => {
-      try {
-        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/zones/${zoneId}`);
-        setZone(response.data); // Adjust according to your API response
+  // useEffect(() => {
+  //   const fetchZone= async () => {
+  //     try {
+  //       const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/zones/${zoneId}`);
+  //       setZone(response.data); // Adjust according to your API response
         
-      } catch (error) {
-        console.error("Error fetching zone:", error);
-      }
-    };
-    fetchZone();
-  }, []);
+  //     } catch (error) {
+  //       console.error("Error fetching zone:", error);
+  //     }
+  //   };
+  //   fetchZone();
+  // }, []);
 
   // Fetch center data
 
-  useEffect(() => {
-    const fetchCenter= async () => {
-      try {
-        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/centers/${centerId}`);
-        setCenter(response.data); // Adjust according to your API response
+  // useEffect(() => {
+  //   const fetchCenter= async () => {
+  //     try {
+  //       const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/centers/${centerId}`);
+  //       setCenter(response.data); // Adjust according to your API response
         
-      } catch (error) {
-        console.error("Error fetching center:", error);
-      }
-    };
-    fetchCenter();
-  }, []);
+  //     } catch (error) {
+  //       console.error("Error fetching center:", error);
+  //     }
+  //   };
+  //   fetchCenter();
+  // }, []);
 
    // Fetch bacenta data
 
-   useEffect(() => {
-    const fetchBacenta= async () => {
-      try {
-        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/bacentas/${bacentaId}`);
-        setBacenta(response.data); // Adjust according to your API response
+  //  useEffect(() => {
+  //   const fetchBacenta= async () => {
+  //     try {
+  //       const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/bacentas/${bacentaId}`);
+  //       setBacenta(response.data); // Adjust according to your API response
         
-      } catch (error) {
-        console.error("Error fetching bacenta:", error);
-      }
-    };
-    fetchBacenta();
-  }, []);
-  
-const UserContact = user.userContact
+  //     } catch (error) {
+  //       console.error("Error fetching bacenta:", error);
+  //     }
+  //   };
+  //   fetchBacenta();
+  // }, []);
 
+// fetching all scopes eg. Center, Zones and Bacenta Details from Database
+  useEffect(() => {
+    if (roleAssignments?.length) {
+      fetchScopeDetails(roleAssignments).then((data) => {
+        //console.log("Scope Details:", data);
+        // Do something with the fetched center/zone/bacenta details
+      });
+    }
+  }, [roleAssignments]);
+
+const UserContact = user?.userContact || null;
+
+//console.log(UserContact);
 
 
    // Fetch Picture path
 
    useEffect(() => {
+    if (!UserContact) return;   // ✅ Don’t run until we actually have a value
     const fetchPicPath = async () => {
       try {
-        // Ensure UserContact is available, and pass it correctly in the API request
-        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/picturepath/${UserContact}`);
-        setPicturePath(response.data); // Adjust according to your API response
-        console.log(response.data)
+        const response = await axios.get(
+          `https://church-management-system-39vg.onrender.com/api/users/picturepath/${UserContact}`
+        );
+        setPicturePath(response.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
-  
     fetchPicPath();
-  }, [UserContact]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
+  }, [UserContact]);
   
   
   
@@ -151,7 +183,7 @@ const UserContact = user.userContact
 
 const UserPicture = picturePath.fileUrl;// Example URL from the database';
  
-console.log(UserPicture);
+//console.log(UserPicture);
 
   useEffect(() => {
     if (isMobile) {
@@ -164,6 +196,8 @@ console.log(UserPicture);
   // To handle logout---------------
 
   const handleLogout = async () => {
+
+   
    
     try {
       
@@ -172,18 +206,20 @@ console.log(UserPicture);
 
       // Remove the token or session from localStorage or sessionStorage
       localStorage.removeItem('token'); // Or sessionStorage.removeItem('token'), depending on where you store it
-       
+      sessionStorage.clear();
       // Optionally, clear any other authentication-related data stored in the app
       // localStorage.removeItem('userData');
 
       // Redirect to the login page after logout
-      navigate('/login');
+      //navigate('/login');
+      navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
   return (
+    
     <Box
       sx={{
         display: "flex",
@@ -208,6 +244,8 @@ console.log(UserPicture);
         "& .pro-menu-item.active": {
           color: "#6870fa !important",
         },
+
+        
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
@@ -236,470 +274,6 @@ console.log(UserPicture);
                 </IconButton>
               </Box>
             )}
-          </MenuItem>
-
-         {/* Conditional rendering based on user role */}
-          {/* Bishop's Sidebar */}
-          {userRole === "bishop" && (
-            <>
-              <Item
-                title="Dashboard"
-                to="/dashboard"
-                icon={<DashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Admin Panel"
-                to="/admin"
-                icon={<CategoryOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              {/* Add more items for admins */}
-            </>
-          )}
-
-          {/* Lead-Pastor's Sidebar */}
-
-          {userRole === "lead_pastor" && (
-            <>
-              <Item
-                title="Dashboard"
-                to="/dashboard"
-                icon={<DashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Centers List"
-                to="/centers"
-                icon={<InventoryOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              {/* Add manager-specific items */}
-            </>
-          )}
-          {/* Administrators SideBar */}
-
-          {userRole === "administrator" && (
-            <>
-            {!isCollapsed && (
-            <Box mb="25px">
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={UserPicture}
-      
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
-                />
-              </Box>
-              <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  ADMIN
-                </Typography>
-                
-
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  {/* {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Leader */}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-              <Item
-                title="Dashboard"
-                to="/dashboard"
-                icon={<DashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-                <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Center Management
-            </Typography>
-            <Item
-                title="Center List"
-                to="/centers"
-                icon={<ZoneOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Zone Management
-            </Typography>
-            <Item
-                title="Zone List"
-                to="/zones"
-                icon={<ZoneOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Bacenta Management
-            </Typography>
-              <Item
-                title="Bacenta List"
-                to="/bacentas"
-                icon={<CategoryOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Membership Management
-            </Typography>
-            <Item
-                title="Membership List"
-                to="/members"
-                icon={<MembershipOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Item
-                title="Attendance"
-                to="/attendance"
-                icon={<AttendanceOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Report Management
-            </Typography>
-
-            <Item
-                title="Report Generator"
-                to="/report"
-                icon={<ReportOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              User Management
-            </Typography>
-            <Item
-                title="User List"
-                to="/users"
-                icon={<UserProfileOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-            <Item
-                title="Profile"
-                to="/profile"
-                icon={<UserProfileOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              _________________________________________
-          
-              <Item
-                title="Logout"
-                to="/login"
-                icon={<LogoutIcon />}
-                selected={selected}
-                setSelected={setSelected}
-                onClick={() => logout()} // Pass the function reference here
-              />
-              {/* Add user-specific items */}
-            </>
-          )}
-
-               {/* Center Leaders SideBar */}
-
-               {userRole === "center" && (
-            <>
-             {!isCollapsed && (
-            <Box mb="25px">
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={UserPicture}
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
-                />
-              </Box>
-              <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  {user.username}
-                </Typography>
-                <Typography variant="h5" color={colors.greenAccent[500]} sx={{ m: "20px 0 0 0" }}>
-                  {center.centerName}
-                </Typography>
-
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Leader
-                </Typography>
-              </Box>
-            </Box>
-          )}
-              <Item
-                title="Dashboard"
-                to="/center-dashboard"
-                icon={<DashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Zone Management
-            </Typography>
-            <Item
-                title="Zone List"
-                to="/zones"
-                icon={<ZoneOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Bacenta Management
-            </Typography>
-              <Item
-                title="Bacenta List"
-                to="/bacentas"
-                icon={<CategoryOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Membership Management
-            </Typography>
-            <Item
-                title="Membership List"
-                to="/members"
-                icon={<MembershipOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Item
-                title="Attendance"
-                to="/attendance"
-                icon={<AttendanceOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Report Management
-            </Typography>
-
-            <Item
-                title="Report Generator"
-                to="/report"
-                icon={<ReportOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              User Management
-            </Typography>
-            <Item
-                title="Profile"
-                to="/profile"
-                icon={<UserProfileOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              _________________________________________
-          
-              <Item
-               title="Logout"
-               icon={<LogoutIcon />}
-               selected={selected}
-               setSelected={setSelected}
-               onClick={() => logout()} // Pass the function reference here
-              />
-              {/* Add user-specific items */}
-            </>
-          )}
-
-             {/* Zone Leaders SideBar */}
-
-            {userRole === "zone" && (
-          
-            <>
-             {!isCollapsed && (
-            <Box mb="25px">
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={UserPicture}
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
-                />
-              </Box>
-              <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  {user.username}
-                </Typography>
-                <Typography variant="h5" color={colors.greenAccent[500]} sx={{ m: "20px 0 0 0" }}>
-                  {zone.zoneName}
-                </Typography>
-
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Leader
-                </Typography>
-              </Box>
-            </Box>
-          )}
-              <Item
-                title="Dashboard"
-                to="/zone-dashboard"
-                icon={<DashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Bacenta Management
-            </Typography>
-              <Item
-                title="Bacenta List"
-                to="/bacentas"
-                icon={<CategoryOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Membership Management
-            </Typography>
-            <Item
-                title="Membership List"
-                to="/members"
-                icon={<MembershipOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Item
-                title="Attendance Recorder"
-                to="/attendance"
-                icon={<AttendanceOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Report Management
-            </Typography>
-
-            <Item
-                title="Report Generator"
-                to="/report"
-                icon={<ReportOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              User Management
-            </Typography>
-            <Item
-                title="Profile"
-                to="/profile"
-                icon={<UserProfileOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              _________________________________________
-          
-              <Item
-                title="Logout"
-                to="/login"
-                icon={<LogoutIcon />}
-                selected={selected}
-                setSelected={setSelected}
-                onClick={() => logout()} // Pass the function reference here
-              />
-              
-              {/* Add user-specific items */}
-            </>
-          )}
-
-          {/* Bacenta Leaders SideBar */}
-
-          {userRole === "bacenta" && (
-            <>
              {!isCollapsed && (
             <Box mb="25px">
               <Box display="flex" justifyContent="center" alignItems="center">
@@ -725,80 +299,118 @@ console.log(UserPicture);
                 </Typography>
 
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Leader
+                  {/* {roleAssignments.charAt(0).toUpperCase() + roleAssignments.slice(1)} Leader */}
                 </Typography>
               </Box>
             </Box>
           )}
+          </MenuItem>
+
+         {/* Conditional rendering based on user role */}
+          {/* Bishop's Sidebar */}
+          {roleAssignments === "bishop" && (
+            <>
               <Item
                 title="Dashboard"
-                to="/bacenta-dashboard"
+                to="/dashboard"
                 icon={<DashboardOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
               />
-               <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Membership Management
-            </Typography>
-            <Item
-                title="Membership List"
-                to="/members"
-                icon={<MembershipOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-               <Item
-                title="Attendance Recorder"
-                to="/attendance"
-                icon={<AttendanceOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Report Management
-            </Typography>
-
-            <Item
-                title="Report Generator"
-                to="/report"
-                icon={<ReportOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              User Management
-            </Typography>
-            <Item
-                title="Profile"
-                to="/profile"
-                icon={<UserProfileOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              _________________________________________
-          
               <Item
-                title="Logout"
-                to="/login"
-                icon={<LogoutIcon />}
+                title="Admin Panel"
+                to="/admin"
+                icon={<CategoryOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
-                onClick={() => logout()} // Pass the function reference here
               />
+              {/* Add more items for admins */}
+            </>
+          )}
+
+          {/* Lead-Pastor's Sidebar */}
+
+          {roleAssignments === "lead_pastor" && (
+            <>
+              <Item
+                title="Dashboard"
+                to="/dashboard"
+                icon={<DashboardOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Centers List"
+                to="/centers"
+                icon={<InventoryOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              {/* Add manager-specific items */}
+            </>
+          )}
+
+          
+          {/* Administrators SideBar */}
+{roleAssignments[0].scopeType === "administrator" && (
+  <>
+
+    {/* Accordion Menu Component */}
+    <AdminAccordionMenu
+      colors={colors}
+      selected={selected}
+      setSelected={setSelected}
+      logout={logout}
+    />
+  </>
+)}
+
+
+               {/* Center Leaders SideBar */}
+
+               {roleAssignments[0].scopeType === "CenterLeader" && (
+            <>
+            
+              {/* Accordion Menu Component */}
+    <CenterAccordionMenu
+      colors={colors}
+      selected={selected}
+      setSelected={setSelected}
+      logout={logout}
+    />
+            </>
+          )}
+
+             {/* Zone Leaders SideBar */}
+
+             {roleAssignments.some(role => role.scopeType === "ZoneLeader") && (
+            
+            <>
+            
+             <ZoneAccordionMenu
+      colors={colors}
+      selected={selected}
+      setSelected={setSelected}
+      logout={logout}
+    />
+              {/* Add user-specific items */}
+            </>
+          )}
+
+
+
+          {/* Bacenta Leaders SideBar */}
+
+          {roleAssignments.some(role => role.scopeType === "BacentaLeader") && (
+            
+            <>
+            
+             <BacentaAccordionMenu
+      colors={colors}
+      selected={selected}
+      setSelected={setSelected}
+      logout={logout}
+    />
               {/* Add user-specific items */}
             </>
           )}

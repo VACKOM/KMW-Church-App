@@ -22,9 +22,9 @@ const Members = ({}) => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/members/');
+        const response = await axios.get('https://church-management-system-39vg.onrender.com/api/members/');
         setMembers(response.data);
-        console.log(response.data);
+        //console.log(response.data);
         setLoading(false);  // Data is loaded
        
       } catch (error) {
@@ -44,7 +44,7 @@ const All= "0000";
     const fetchPicPath = async () => {
       try {
         // Ensure UserContact is available, and pass it correctly in the API request
-        const response = await axios.get(`http://localhost:8080/api/users/pictures/${All}`);
+        const response = await axios.get(`https://church-management-system-39vg.onrender.com/api/users/pictures/${All}`);
         setPicturePath(response.data); // Adjust according to your API response
       } catch (error) {
         console.error("Error fetching member data:", error);
@@ -54,7 +54,7 @@ const All= "0000";
     fetchPicPath();
   }, [All]);  // Make sure `UserContact` is correctly defined and triggers a re-fetch when it changes
 
-  console.log(picturePath.fileUrl);
+  //console.log(picturePath.fileUrl);
  
 // Update members list when members data is fetched
 useEffect(() => {

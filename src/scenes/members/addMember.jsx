@@ -7,6 +7,10 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
 import { useNavigate, useLocation } from "react-router-dom";
 import MuiAlert from '@mui/material/Alert';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+
 
 // Validation Schema
 const MemberSchema = yup.object().shape({
@@ -293,7 +297,7 @@ const Member = () => {
               />
 
               {/* Date of birth Text Field */}
-              <TextField
+              {/* <TextField
                 fullWidth
                 variant="filled"
                 label="Date of Birth"
@@ -304,7 +308,35 @@ const Member = () => {
                 error={!!touched.dob&& !!errors.dob}
                 helperText={touched.dob && errors.dob}
                 sx={{ gridColumn: "span 4" }}
-              />
+              /> */}
+
+<LocalizationProvider dateAdapter={AdapterDateFns}>
+  <DatePicker
+    label="Date of Birth"
+    value={values.dob}
+    onChange={(newValue) => {
+      handleChange({
+        target: {
+          name: 'dob',
+          value: newValue,
+        },
+      });
+    }}
+    onBlur={handleBlur}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        fullWidth
+        variant="filled"
+        name="dob"
+        error={!!touched.dob && !!errors.dob}
+        helperText={touched.dob && errors.dob}
+        //sx={{ gridColumn: "span 4" }}
+      />
+    )}
+    sx={{ gridColumn: "span 4" }}
+  />
+</LocalizationProvider>
 
                 {/* Gender Select */}
  <FormControl
@@ -657,7 +689,7 @@ const Member = () => {
 
 
               {/* Date joined Text Field */}
-              <TextField
+              {/* <TextField
                 fullWidth
                 variant="filled"
                 label="Date Joined"
@@ -668,7 +700,35 @@ const Member = () => {
                 error={!!touched.date_joined&& !!errors.date_joined}
                 helperText={touched.date_joined && errors.date_joined}
                 sx={{ gridColumn: "span 4" }}
-              />
+              /> */}
+
+<LocalizationProvider dateAdapter={AdapterDateFns}>
+  <DatePicker
+    label="Date Joined"
+    value={values.date_joined}
+    onChange={(newValue) => {
+      handleChange({
+        target: {
+          name: 'date_joined',
+          value: newValue,
+        },
+      });
+    }}
+    onBlur={handleBlur}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        fullWidth
+        variant="filled"
+        name="date_joined"
+        error={!!touched.date_joined && !!errors.date_joined}
+        helperText={touched.date_joined && errors.date_joined}
+        //sx={{ gridColumn: "span 4" }}
+      />
+    )}
+    sx={{ gridColumn: "span 4" }}
+  />
+</LocalizationProvider>
 
 
               {/* Profile Image Upload */}

@@ -15,12 +15,13 @@ import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 import { AuthProvider, useAuth } from '../../context/AuthContext'; // Auth context
-
+import { useParams } from "react-router-dom";
 
 const Center = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check for mobile size
+  
   const [center, setCenter] = useState([]);
   const [zone, setZone] = useState([]);
   const [bacenta, setBacenta] = useState([]);
@@ -41,38 +42,64 @@ const Center = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   //Checking for user Authentication
-  const role = localStorage.getItem('role');
-  const userCenter = localStorage.getItem('center');
-  
-    useEffect(() => {
-      if (!user) {
-        // Redirect to login if no user is found
-        navigate('/login');
-        setIsAuthenticated(false);
-      } else if (role !== 'center') {
-        navigate('/unauthorized');
-        setIsAuthenticated(false);
-      } else {
-        // User exists and has the required permission, so continue normal operation
-        setIsAuthenticated(true);
-        // Perform additional logic if needed
-      }
-    }, [user, navigate]);
+ 
+  const roleAssignments = localStorage.getItem('roles');
+const parsed = roleAssignments ? JSON.parse(roleAssignments) : [];
 
-// Fetch centers data
- useEffect(() => {
-    const fetchCenter = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
-        setCenter(response.data); // Adjust according to your API response
-        setFoundCenter(response.data.find(item => item._id === userCenter)); // Find the center by _id
-        
-      } catch (error) {
-        console.error("Error fetching center:", error);
+// Get the single CenterLeader scopeItem
+const centerScopeItem = Array.isArray(parsed)
+  ? parsed.find(item => item.scopeType === "CenterLeader")?.scopeItem
+  : null;
+
+ // Get roles from localStorage
+const storedRoles = localStorage.getItem('roles');
+
+// Parse it into an array
+const role = storedRoles ? JSON.parse(storedRoles) : [];
+
+// Now you can safely use .some()
+const myScopeType = role.some(role => role.scopeType === "CenterLeader")
+  ? "CenterLeader"
+  : null;
+
+//console.log(myScopeType);
+
+
+useEffect(() => {
+  if (!user) {
+    navigate('/login');
+    setIsAuthenticated(false);
+  } else if (myScopeType !== 'CenterLeader') {
+    navigate('/unauthorized');
+    setIsAuthenticated(false);
+  } else {
+    setIsAuthenticated(true);
+  }
+}, [user, role, navigate]);
+
+
+
+useEffect(() => {
+  const fetchCenter = async () => {
+    try {
+      const { data } = await axios.get(
+        "https://church-management-system-39vg.onrender.com/api/centers/"
+      );
+      setCenter(data);
+
+      // Find center directly from fetched data
+      if (centerScopeItem) {
+        const matchedCenter = data.find(item => item._id === centerScopeItem);
+        setFoundCenter(matchedCenter || null);
       }
-    };
-    fetchCenter();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching center:", error);
+    }
+  };
+
+  fetchCenter();
+}, [centerScopeItem]);
+
 
 
   useEffect(() => {

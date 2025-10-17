@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
 import Topbar from "../global/TopBar";  // Import your Topbar component
 
-const AddAttendance = () => {
+const Attendance = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [attendances, setAttendances] = useState([]);
@@ -44,9 +44,10 @@ const AddAttendance = () => {
            // id: attendance._id,
             // id: attendance.attendanceID, // Ensure each row has a unique 'id' property
             //attendanceId: attendance.attendanceId,
-            dateAttendance:attendance.dateAttendance,
-            id: attendance.bacentaName,
-            bacentaMembership: attendance.bacentaMembership,
+            date:attendance.date,
+            id: attendance._id,
+            bacentaName: attendance.bacentaName,
+            sundayAttendance: attendance.sundayAttendance,
             adultAttendance: attendance.adultAttendance,
             childrenAttendance:attendance.childrenAttendance,
             soulsInChurch: attendance.soulsInChurch,
@@ -87,15 +88,17 @@ const AddAttendance = () => {
   const filteredAttendance = attendanceList.filter(attendance => {
     const query = searchQuery.toLowerCase(); // Normalize the search query
     return (
-      attendance.dateAttendance.toLowerCase().includes(query) ||
+      attendance.date.toLowerCase().includes(query) ||
       attendance.bacentaName.toLowerCase().includes(query) ||
-      attendance.bacentaMembership.toLowerCase().includes(query) ||
+      attendance.sundayAttendance.toLowerCase().includes(query) ||
       attendance.childrenAttendance.toLowerCase().includes(query) ||
+      attendance.adultsAttendance.toLowerCase().includes(query) ||
       attendance.soulsInChurch.toLowerCase().includes(query) ||
       attendance.newBelieversSchoolAttendance.includes(query) ||
       attendance.bacentaMeetingAttendance.includes(query) ||
       attendance.membersAbsent.toLowerCase().includes(query) ||
       attendance.laySchoolAttendance.toLowerCase().includes(query)
+
      
     );
   });
@@ -120,11 +123,11 @@ const AddAttendance = () => {
 
   // Columns for DataGrid with editable fields
   const columns = [
-    { field: "dateAttendance", headerName: "Date", flex: 1, editable: true },
-    { field: "id", headerName: "Bacenta Name", editable: false },
-   // { field: "bacenataName", headerName: "Bacenta Name", flex: 1, editable: true },
+    { field: "date", headerName: "Date", flex: 1, editable: true },
+    //{ field: "id", headerName: "Bacenta Name", editable: false },
+    { field: "bacentaName", headerName: "Bacenta Name", flex: 1, editable: true },
     //{ field: "center", headerName: "Bacenta's Center", flex: 1, editable: false },
-    { field: "bacentaMembership", headerName: "Membership", flex: 1, editable: true },
+    { field: "sundayAttendance", headerName: "Sunday Attendance", flex: 1, editable: true },
     { field: "adultAttendance", headerName: "Adult", flex: 1, editable: true },
     { field: "childrenAttendance", headerName: "Children", editable: true },
     { field: "soulsInChurch", headerName: "Souls In Church", editable: true },
@@ -132,9 +135,6 @@ const AddAttendance = () => {
     { field: "bacentaMeetingAttendance", headerName: "Bacenta Meeting", flex: 1, editable: true },
     { field: "laySchoolAttendance", headerName: "Lay School", flex: 1, editable: true },
     { field: "membersAbsent", headerName: "Absent", flex: 1, editable: true },
-
-    
-
    
   ];
 
@@ -236,4 +236,4 @@ const AddAttendance = () => {
   );
 };
 
-export default AddAttendance;
+export default Attendance;
