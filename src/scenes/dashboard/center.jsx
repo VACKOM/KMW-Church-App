@@ -51,6 +51,14 @@ const centerScopeItem = Array.isArray(parsed)
   ? parsed.find(item => item.scopeType === "CenterLeader")?.scopeItem
   : null;
 
+  const zoneScopeItem = Array.isArray(parsed)
+  ? parsed.find(item => item.scopeType === "ZoneLeader")?.scopeItem
+  : null;
+
+  const bacentaScopeItem = Array.isArray(parsed)
+  ? parsed.find(item => item.scopeType === "BacentaLeader")?.scopeItem
+  : null;
+
  // Get roles from localStorage
 const storedRoles = localStorage.getItem('roles');
 
@@ -109,9 +117,10 @@ useEffect(() => {
         setZone(response.data); // Assuming this is an array of zones
         
         // Filter zones based on the centerName
-        const filteredZones = response.data.filter(item => item.center === foundCenter.centerName);
+        const filteredZones = response.data.filter(item => item.center === foundCenter._id);
         setFoundZone(filteredZones); // Set zones that match the centerName
-        
+       
+
       } catch (error) {
         console.error("Error fetching zone:", error);
       }
@@ -128,7 +137,8 @@ useEffect(() => {
          setBacenta(response.data); // Adjust according to your API response
 
           // Filter bacenta based on the centerName
-        const filteredBacentas = response.data.filter(item => item.center === foundCenter.centerName);
+        const filteredBacentas = response.data.filter(item => item.center === foundCenter._id);
+        //const filteredBacentas = response.data.filter(item => item.center === foundCenter._id);
         setFoundBacenta(filteredBacentas); // Set zones that match the centerName
          
        } catch (error) {

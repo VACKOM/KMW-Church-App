@@ -1,196 +1,187 @@
-import { Box, Typography, useTheme, CircularProgress, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  useTheme,
+  CircularProgress,
+  Button,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from "react";
+import axios from "axios";
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-import Topbar from "../global/TopBar";  // Import your Topbar component
+import { useNavigate } from "react-router-dom";
+import Topbar from "../global/TopBar";
 
 const Attendance = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [attendances, setAttendances] = useState([]);
   const [attendanceList, setAttendanceList] = useState([]);
-  const [loading, setLoading] = useState(true); // Add a loading state
-  const [error, setError] = useState(null); // Add an error state
+  const [bacentas, setBacentas] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const navigate = useNavigate(); // Initialize the navigate function
-  
+  const navigate = useNavigate();
 
-  // Fetch Attendance
+  // ✅ Retrieve user scope info
+  const roleAssignments = localStorage.getItem("roles");
+  const parsedRoles = roleAssignments ? JSON.parse(roleAssignments) : [];
+
+  const centerLeader = parsedRoles.find(
+    (r) => r.scopeType === "CenterLeader"
+  )?.scopeItem;
+  const zoneLeader = parsedRoles.find(
+    (r) => r.scopeType === "ZoneLeader"
+  )?.scopeItem;
+  const bacentaLeader = parsedRoles.find(
+    (r) => r.scopeType === "BacentaLeader"
+  )?.scopeItem;
+
+  const userScopeType =
+    (centerLeader && "CenterLeader") ||
+    (zoneLeader && "ZoneLeader") ||
+    (bacentaLeader && "BacentaLeader");
+
+  // ✅ Fetch Attendance, Zones, and Bacentas
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/attendances/");
-        setAttendances(response.data);
-        setLoading(false);  // Data is loaded
-        
-       
+        const [attendanceRes, zoneRes, bacentaRes] = await Promise.all([
+          axios.get(
+            "https://church-management-system-39vg.onrender.com/api/attendances/"
+          ),
+          axios.get(
+            "https://church-management-system-39vg.onrender.com/api/zones/"
+          ),
+          axios.get(
+            "https://church-management-system-39vg.onrender.com/api/bacentas/"
+          ),
+        ]);
+
+        setAttendances(attendanceRes.data);
+        setZones(zoneRes.data);
+        setBacentas(bacentaRes.data);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching attendances:', error);
-        setError('Failed to load attendance or attendance not filled yet');
-        setLoading(false);  // Data loading is done, but there was an error
+        console.error("Error fetching attendances:", error);
+        setError("Failed to load attendance or attendance not filled yet");
+        setLoading(false);
       }
     };
-    fetchAttendance();
+
+    fetchData();
   }, []);
 
-  // Update attendances list when attendance data is fetched
+  // ✅ Combine Attendance + Bacenta + Zone + Center + Filter by Scope
   useEffect(() => {
-    if (attendances.length > 0) {
-      const combinedData = attendances.map((attendance) => {
-          return {
-           // id: attendance._id,
-            // id: attendance.attendanceID, // Ensure each row has a unique 'id' property
-            //attendanceId: attendance.attendanceId,
-            date:attendance.date,
-            id: attendance._id,
-            bacentaName: attendance.bacentaName,
-            sundayAttendance: attendance.sundayAttendance,
-            adultAttendance: attendance.adultAttendance,
-            childrenAttendance:attendance.childrenAttendance,
-            soulsInChurch: attendance.soulsInChurch,
-            newBelieversSchoolAttendance: attendance.newBelieversSchoolAttendance,
-            bacentaMeetingAttendance:attendance.bacentaMeetingAttendance,
-            membersAbsent: attendance.membersAbsent,
-            laySchoolAttendance: attendance.laySchoolAttendance,
-            // center: attendance.center
-          };
-        });
-      setAttendanceList(combinedData);  // Update the attendancesList state
-      
+    if (attendances.length > 0 && bacentas.length > 0 && zones.length > 0) {
+      const combined = attendances.map((attendance) => {
+        const relatedBacenta =
+          bacentas.find((b) => b._id === attendance.bacenta) || {};
+        const relatedZone =
+          zones.find((z) => z._id === relatedBacenta.zone) || {};
+
+        // ✅ Format date as DD/MM/YYYY
+        let formattedDate = "Invalid Date";
+        if (attendance.date) {
+          const d = new Date(attendance.date);
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const year = d.getFullYear();
+          formattedDate = `${day}/${month}/${year}`;
+        }
+
+        return {
+          id: attendance._id,
+          bacentaId: attendance.bacenta, // ✅ added so we can filter properly
+          date: formattedDate,
+          bacentaName:
+            relatedBacenta.bacentaName ||
+            attendance.bacentaName ||
+            "Unknown Bacenta",
+          bacentaMembersNo: attendance.bacentaMembersNo,
+          adultAttendance: attendance.adultAttendance,
+          childrenAttendance: attendance.childrenAttendance,
+          soulsInChurch: attendance.soulsInChurch,
+          newBelieversSchoolAttendance:
+            attendance.newBelieversSchoolAttendance,
+          bacentaMeetingAttendance: attendance.bacentaMeetingAttendance,
+          membersAbsent: attendance.membersAbsent,
+          laySchoolAttendance: attendance.laySchoolAttendance,
+          zoneId: relatedBacenta.zone,
+          centerId: relatedZone.center,
+        };
+      });
+
+      // ✅ Filter based on user's scope
+      let scopedAttendances = combined;
+
+      if (userScopeType === "BacentaLeader" && bacentaLeader) {
+        // ✅ Show only attendances for this bacenta
+        scopedAttendances = combined.filter(
+          (att) => att.bacentaId === bacentaLeader
+        );
+      } else if (userScopeType === "ZoneLeader" && zoneLeader) {
+        // ✅ Show attendances under this zone
+        scopedAttendances = combined.filter((att) => att.zoneId === zoneLeader);
+      } else if (userScopeType === "CenterLeader" && centerLeader) {
+        // ✅ Show attendances under this center
+        scopedAttendances = combined.filter(
+          (att) => att.centerId === centerLeader
+        );
+      }
+
+      setAttendanceList(scopedAttendances);
     }
-  }, [attendances]);
- 
-//   // Button to generate QR Code
-//   const handleButtonClick = (rowData) => {
-//     console.log("Button clicked for attendance: ", rowData);
-//     const qrcode = `Bacenta ID: ${rowData.attendanceId}, Bacenta Name: ${rowData.name}, Bacenta Description: ${rowData.description}, Bacenta Location: ${rowData.location}`;
-//     navigate(`/qrcode-generator?qrcode=${encodeURIComponent(qrcode)}`);
-//   };
+  }, [attendances, bacentas, zones, centerLeader, zoneLeader, bacentaLeader]);
 
-//   // Button to generate Claims
-//   const handleClaimClick = (rowData) => {
-//     navigate(`/claim-attendance`);
-//   };
+  // ✅ Search filter
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
 
-  // Button Add New Attendance click handler
+  const filteredAttendance = attendanceList.filter((attendance) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      attendance.date?.toLowerCase().includes(q) ||
+      attendance.bacentaName?.toLowerCase().includes(q) ||
+      attendance.soulsInChurch?.toString().includes(q)
+    );
+  });
+
+  // ✅ Add Attendance button
   const handleAddButtonClick = () => {
     navigate("/add-attendance");
   };
 
-  const handleSearch = (query) => {
-    setSearchQuery(query); // Update the search query state 
-  };
-
-  // Filter attendances based on the search query
-  const filteredAttendance = attendanceList.filter(attendance => {
-    const query = searchQuery.toLowerCase(); // Normalize the search query
-    return (
-      attendance.date.toLowerCase().includes(query) ||
-      attendance.bacentaName.toLowerCase().includes(query) ||
-      attendance.sundayAttendance.toLowerCase().includes(query) ||
-      attendance.childrenAttendance.toLowerCase().includes(query) ||
-      attendance.adultsAttendance.toLowerCase().includes(query) ||
-      attendance.soulsInChurch.toLowerCase().includes(query) ||
-      attendance.newBelieversSchoolAttendance.includes(query) ||
-      attendance.bacentaMeetingAttendance.includes(query) ||
-      attendance.membersAbsent.toLowerCase().includes(query) ||
-      attendance.laySchoolAttendance.toLowerCase().includes(query)
-
-     
-    );
-  });
- 
-
-//   // Handle row update (when user types into the grid)
-//   const handleRowEdit = async (updatedRow) => {
-//     const updatedBacentas = attendancesList.map((attendance) =>
-//       attendance.ID === updatedRow.ID ? { ...attendance, ...updatedRow } : attendance
-//     );
-//     setBacentasList(updatedBacentas);  // Update local state immediately for a better user experience
-
-//     try {
-//       // Make an API call to update the attendance on the server
-//       await axios.put(`https://node-js-inventory-system.onrender.com/api/attendance/${updatedRow.ID}`, updatedRow);
-//     } catch (error) {
-//       console.error('Error updating attendance:', error);
-//     }
-
-//     return updatedRow; // Return the updated row data for the grid to process
-//   };
-
-  // Columns for DataGrid with editable fields
+  // ✅ Columns for DataGrid
   const columns = [
-    { field: "date", headerName: "Date", flex: 1, editable: true },
-    //{ field: "id", headerName: "Bacenta Name", editable: false },
-    { field: "bacentaName", headerName: "Bacenta Name", flex: 1, editable: true },
-    //{ field: "center", headerName: "Bacenta's Center", flex: 1, editable: false },
-    { field: "sundayAttendance", headerName: "Sunday Attendance", flex: 1, editable: true },
-    { field: "adultAttendance", headerName: "Adult", flex: 1, editable: true },
-    { field: "childrenAttendance", headerName: "Children", editable: true },
-    { field: "soulsInChurch", headerName: "Souls In Church", editable: true },
-    { field: "newBelieversSchoolAttendance", headerName: "New Believers", flex: 1, editable: true },
-    { field: "bacentaMeetingAttendance", headerName: "Bacenta Meeting", flex: 1, editable: true },
-    { field: "laySchoolAttendance", headerName: "Lay School", flex: 1, editable: true },
-    { field: "membersAbsent", headerName: "Absent", flex: 1, editable: true },
-   
+    { field: "date", headerName: "Date", flex: 1 },
+    { field: "bacentaName", headerName: "Bacenta Name", flex: 1 },
+    { field: "bacentaMembersNo", headerName: "Members", flex: 1 },
+    { field: "adultAttendance", headerName: "Adults", flex: 1 },
+    { field: "childrenAttendance", headerName: "Children", flex: 1 },
+    { field: "soulsInChurch", headerName: "Souls in Church", flex: 1 },
+    {
+      field: "newBelieversSchoolAttendance",
+      headerName: "New Believers",
+      flex: 1,
+    },
+    {
+      field: "bacentaMeetingAttendance",
+      headerName: "Bacenta Meeting",
+      flex: 1,
+    },
+    { field: "laySchoolAttendance", headerName: "Lay School", flex: 1 },
+    { field: "membersAbsent", headerName: "Absent", flex: 1 },
   ];
-
-
-//   const handleSelectionModelChange = (selectionModel) => {
-//     // Log the selection model to ensure it's working
-//     console.log('Selection Model:', selectionModel);
-
-//     // Check if the selectionModel is not empty
-//     if (selectionModel && selectionModel.length > 0) {
-//         const selectedBacentaIds = selectionModel.map((id) => {
-//             const attendance = attendancesList.find((attendance) => attendance.id === id);
-//             return attendance ? attendance.attendanceId : null;
-//         }).filter((attendanceId) => attendanceId !== null);  // Filter out any null values
-
-//         // Show the alert with the selected attendance IDs
-//         if (selectedBacentaIds.length > 0) {
-//             alert(`Selected Bacenta IDs: ${selectedBacentaIds.join(', ')}`);
-//         }
-//     } else {
-//         console.log('No rows selected');
-//     }
-// };
-
-
-
-//   // Handle cell click and alert the content
-// const handleCellClick = (params) => {
-//   const columnName = params.field;  // The field name (column header)
-//   const cellValue = params.value;   // The value in the clicked cell
-//   let requestInput = "";            // Use 'let' to allow reassignment
-//   // alert(`Column: ${columnName}\nContent: ${cellValue}`);
-
-//   if (columnName === "requestContact") {
-//     requestInput = cellValue;       // Now you can reassign the value
-//     navigate(`/claim-attendance?requestInput=${encodeURIComponent(requestInput)}`);
-//   }
-//   else if (columnName === "requestingOfficer") {
-//     requestInput = cellValue;       // Now you can reassign the value
-//     navigate(`/claim-attendance?requestInput=${encodeURIComponent(requestInput)}`);
-//   }
-//   else if (columnName === "id") {
-//     const requestInput = cellValue; // Get the cell value as the attendanceId
-//     // URL-encode the requestInput (BacentaId)
-//     const encodedInput = encodeURIComponent(requestInput);
-//     // Navigate with the encoded attendanceId as a query parameter
-//     navigate(`/claim-attendance?requestInput=${encodedInput}`);
-// }
-// };
-
-
 
   return (
     <Box m="20px">
       <Box>
-        <Topbar onSearch={handleSearch} /> 
+        <Topbar onSearch={handleSearch} />
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -203,33 +194,25 @@ const Attendance = () => {
           >
             Add New Attendance
           </Button>
-
-          {/* <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleClaimClick}
-          >
-            Bacenta Claims
-          </Button> */}
         </Box>
       </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="75vh">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="75vh"
+        >
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Typography color="error" variant="h6" align="center">{error}</Typography>
+        <Typography color="error" variant="h6" align="center">
+          {error}
+        </Typography>
       ) : (
         <Box m="40px 0 0 0" height="75vh">
-          <DataGrid 
-            //checkboxSelection 
-            rows={filteredAttendance} 
-            columns={columns} 
-            //processRowUpdate={handleRowEdit} // Handle row edits
-            //onCellClick={handleCellClick}  // Add this to handle cell clicks
-           // onSelectionModelChange={handleSelectionModelChange}  // Correct event handler for checkbox clicks
-          />
+          <DataGrid rows={filteredAttendance} columns={columns} />
         </Box>
       )}
     </Box>

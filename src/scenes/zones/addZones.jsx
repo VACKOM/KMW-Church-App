@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, MenuItem } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -26,19 +26,42 @@ const Zone = () => {
   const { foundCenter: receivedCenter } = location.state || {};
 
   const [centers, setCenters] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userCenter, setUserCenter] = useState("");
 
-  // ✅ Fetch all centers (only needed if you may use them for display)
+  // ✅ Fetch centers and determine if user is admin
   useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const response = await axios.get(
+        const { data } = await axios.get(
           "https://church-management-system-39vg.onrender.com/api/centers/"
         );
-        setCenters(response.data);
+        setCenters(data);
+
+        // ✅ Get role assignments from localStorage
+        const roleData = localStorage.getItem("roles");
+        const parsedRoles = roleData ? JSON.parse(roleData) : [];
+
+        // ✅ Check if user is Administrator
+        const adminRole = parsedRoles.find(
+          (role) => role.scopeType === "administrator"
+        );
+        setIsAdmin(!!adminRole);
+
+        // ✅ Otherwise, find user's center if available
+        if (!adminRole) {
+          const centerLeader = parsedRoles.find(
+            (role) => role.scopeType === "CenterLeader"
+          );
+          if (centerLeader) {
+            setUserCenter(centerLeader.scopeItem); // store center _id
+          }
+        }
       } catch (error) {
         console.error("Error fetching centers:", error);
       }
     };
+
     fetchCenters();
   }, []);
 
@@ -46,11 +69,11 @@ const Zone = () => {
   const randomNum = Math.floor(Math.random() * 1000);
   const generateID = `ZON/${randomNum}`;
 
-  // ✅ Form Submit Handler
+  // ✅ Handle Form Submit
   const handleSubmit = async (values) => {
     try {
       console.log("Submitting:", values);
-      await axios.post("http://localhost:8080/api/zones/", values);
+      await axios.post("https://church-management-system-39vg.onrender.com/api/zones/", values);
       alert("Zone registered successfully!");
       navigate("/zones");
     } catch (error) {
@@ -70,11 +93,16 @@ const Zone = () => {
           zoneLeader: "",
           zoneContact: "",
           zoneEmail: "",
-          // ✅ Save only the center _id (hidden)
-          center: receivedCenter ? receivedCenter._id : "",
+          // ✅ Center _id depends on role
+          center: isAdmin
+            ? ""
+            : receivedCenter
+            ? receivedCenter._id
+            : userCenter || "",
         }}
         validationSchema={zoneSchema}
         onSubmit={handleSubmit}
+        enableReinitialize
       >
         {({
           values,
@@ -85,9 +113,6 @@ const Zone = () => {
           handleSubmit,
         }) => (
           <form onSubmit={handleSubmit}>
-            {/* ✅ Hidden input to keep center _id */}
-            <input type="hidden" name="center" value={values.center} />
-
             <Box
               display="grid"
               gap="30px"
@@ -163,6 +188,34 @@ const Zone = () => {
                 helperText={touched.zoneEmail && errors.zoneEmail}
                 sx={{ gridColumn: "span 4" }}
               />
+
+              {/* ✅ Show Center Dropdown only for Administrator */}
+              {isAdmin && (
+                <TextField
+                  select
+                  fullWidth
+                  variant="filled"
+                  label="Select Center"
+                  name="center"
+                  value={values.center}
+                  onChange={handleChange}
+                  error={!!touched.center && !!errors.center}
+                  helperText={touched.center && errors.center}
+                  sx={{ gridColumn: "span 4" }}
+                >
+                  <MenuItem value="">Select a Center</MenuItem>
+                  {centers.map((center) => (
+                    <MenuItem key={center._id} value={center._id}>
+                      {center.centerName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+
+              {/* ✅ Hidden field for non-admin users */}
+              {!isAdmin && (
+                <input type="hidden" name="center" value={values.center} />
+              )}
             </Box>
 
             <Box display="flex" justifyContent="end" mt="20px">

@@ -119,7 +119,7 @@ const Zones = () => {
     { field: "zoneLeader", headerName: "Zone Leader", flex: 1 },
     { field: "zoneContact", headerName: "Zone Contact", flex: 1 },
     { field: "zoneEmail", headerName: "Zone Email", flex: 1 },
-    { field: "center", headerName: "Center ID", flex: 1 }, // ✅ still shows _id
+    //{ field: "center", headerName: "Center ID", flex: 1 }, // ✅ still shows _id
   ];
 
   const rows = finalZones.map((z) => ({

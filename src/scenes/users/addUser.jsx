@@ -19,6 +19,7 @@ import ScopeSelect from "../../components/ScopeSelect.jsx";
 
 const generateRandomPassword = () => {
   return Math.random().toString(36).slice(-8) + "Aa1";
+  
 };
 
 // ✅ Schema validation
@@ -86,7 +87,8 @@ const AddUser = () => {
     onSubmit: async (values) => {
       try {
         const formData = new FormData();
-
+        
+        console.log(values.password);
         // ✅ Append normal fields
         formData.append("firstName", values.firstName);
         formData.append("lastName", values.lastName);

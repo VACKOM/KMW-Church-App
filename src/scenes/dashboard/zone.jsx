@@ -106,7 +106,7 @@ const Zone = () => {
 
          
           // Filter bacenta based on the centerName
-        const filteredBacentas = response.data.filter(item => item.zone === foundZone.zoneName);
+        const filteredBacentas = response.data.filter(item => item.zone === foundZone._id);
         setFoundBacenta(filteredBacentas); // Set zones that match the centerName
          
        } catch (error) {
@@ -138,7 +138,7 @@ const Zone = () => {
 
 useEffect(() => {
   const calculateProgress = () => {
-    if(foundCenter.centerName === "BANK QUARTERS"){
+    if(foundCenter.centerName === "GBAWE MALLAM"){
       setBacentaTarget(120);
       setAttendanceTarget(500);
       setMembershipTarget(2000);
