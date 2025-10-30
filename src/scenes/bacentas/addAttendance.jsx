@@ -47,6 +47,7 @@ const AddAttendance = () => {
   const roleAssignments = localStorage.getItem("roles");
   const parsedRoles = roleAssignments ? JSON.parse(roleAssignments) : [];
 
+  const admin = parsedRoles.find((r) => r.scopeType === "administrator");
   const centerLeader = parsedRoles.find(
     (r) => r.scopeType === "CenterLeader"
   )?.scopeItem;
@@ -58,6 +59,7 @@ const AddAttendance = () => {
   )?.scopeItem;
 
   const userScopeType =
+    (admin && "administrator") ||
     (centerLeader && "CenterLeader") ||
     (zoneLeader && "ZoneLeader") ||
     (bacentaLeader && "BacentaLeader");
@@ -114,7 +116,10 @@ const AddAttendance = () => {
 
       console.log("Submitting:", payload);
 
-      await axios.post("https://church-management-system-39vg.onrender.com/api/attendances/", payload);
+      await axios.post(
+        "https://church-management-system-39vg.onrender.com/api/attendances/",
+        payload
+      );
       alert("Attendance submitted successfully!");
       navigate("/attendance");
     } catch (error) {
@@ -220,7 +225,55 @@ const AddAttendance = () => {
                   sx={{ gridColumn: "span 4" }}
                 />
 
-                {/* ✅ Zone & Bacenta Selects */}
+                {/* ✅ Administrator: can select both Zone and Bacenta */}
+                {userScopeType === "administrator" && (
+                  <>
+                    <FormControl
+                      fullWidth
+                      variant="filled"
+                      sx={{ gridColumn: "span 2" }}
+                    >
+                      <InputLabel>Zone</InputLabel>
+                      <Select
+                        name="zone"
+                        value={values.zone}
+                        onChange={handleChange}
+                      >
+                        {zones.map((z) => (
+                          <MenuItem key={z._id} value={z._id}>
+                            {z.zoneName}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl
+                      fullWidth
+                      variant="filled"
+                      sx={{ gridColumn: "span 2" }}
+                    >
+                      <InputLabel>Bacenta</InputLabel>
+                      <Select
+                        name="bacenta"
+                        value={values.bacenta}
+                        onChange={handleChange}
+                      >
+                        {bacentas
+                          .filter(
+                            (b) =>
+                              !values.zone || b.zone === values.zone
+                          )
+                          .map((b) => (
+                            <MenuItem key={b._id} value={b._id}>
+                              {b.bacentaName}
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                  </>
+                )}
+
+                {/* ✅ CenterLeader: select from their center */}
                 {userScopeType === "CenterLeader" && (
                   <>
                     <FormControl
@@ -267,6 +320,7 @@ const AddAttendance = () => {
                   </>
                 )}
 
+                {/* ✅ ZoneLeader: can only select Bacenta */}
                 {userScopeType === "ZoneLeader" && (
                   <FormControl
                     fullWidth
@@ -290,6 +344,7 @@ const AddAttendance = () => {
                   </FormControl>
                 )}
 
+                {/* ✅ BacentaLeader: read-only IDs */}
                 {userScopeType === "BacentaLeader" && (
                   <Box
                     sx={{
@@ -321,7 +376,6 @@ const AddAttendance = () => {
                   },
                   { name: "laySchoolAttendance", label: "Lay School Attendance" },
                   { name: "membersAbsent", label: "Members Absent", readOnly: true },
-                  
                 ].map((field) => (
                   <TextField
                     key={field.name}
@@ -357,4 +411,5 @@ const AddAttendance = () => {
 };
 
 export default AddAttendance;
+
 
