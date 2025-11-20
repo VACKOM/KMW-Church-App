@@ -1,244 +1,122 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Button, Typography, IconButton, useTheme, useMediaQuery } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import Diversity1Icon from '@mui/icons-material/Diversity1';
 import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
+import LineChart from "../../components/AdminLineChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
-import { AuthProvider, useAuth } from '../../context/AuthContext'; // Auth context
-import { useParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useCenterTargets } from '../../hook/useCenterTargets.jsx';
 
 const Center = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check for mobile size
-  
-  const [center, setCenter] = useState([]);
-  const [zone, setZone] = useState([]);
-  const [bacenta, setBacenta] = useState([]);
-  const [foundBacenta, setFoundBacenta] = useState([]);
-  const [foundCenter, setFoundCenter] = useState([]);
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+
+  // Auth
+  const { user } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // State
+  const [foundCenter, setFoundCenter] = useState(null);
   const [foundZone, setFoundZone] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [membership, setMembership] = useState(422);
-  const [bacentaProgress, setBacentaProgress] = useState(0);
-  const [sundayAttendanceProgress, setSundayAttendanceProgress] = useState(0);
-  const [bacentaTarget, setBacentaTarget] = useState([]);
-  const [attendanceTarget, setAttendanceTarget] = useState([]);
-  const [membershipTarget, setMembershipTarget] = useState([]);
-  const [membershipProgress, setMembershipProgress] = useState([]);
-  const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
-  const navigate = useNavigate(); // Initialize navigate hook
-   const { user } = useAuth();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  //Checking for user Authentication
- 
-  const roleAssignments = localStorage.getItem('roles');
-const parsed = roleAssignments ? JSON.parse(roleAssignments) : [];
+  const [foundBacenta, setFoundBacenta] = useState([]);
+  const [membership, setMembership] = useState(0);
+  const [bacentaAttendance, setBacentaAttendance] = useState(0);
+  const [sundayAttendance, setSundayAttendance] = useState(0);
 
-// Get the single CenterLeader scopeItem
-const centerScopeItem = Array.isArray(parsed)
-  ? parsed.find(item => item.scopeType === "CenterLeader")?.scopeItem
-  : null;
+  // Get center leader scope
+  const storedRoles = localStorage.getItem('roles');
+  const roles = storedRoles ? JSON.parse(storedRoles) : [];
+  const centerLeaderRole = roles.find(r => r.scopeType === "CenterLeader");
+  const centerId = centerLeaderRole?.scopeItem;
 
-  const zoneScopeItem = Array.isArray(parsed)
-  ? parsed.find(item => item.scopeType === "ZoneLeader")?.scopeItem
-  : null;
+  // Hook: fetch targets
+  const { membershipTarget, bacentaTarget, attendanceTarget } = useCenterTargets(centerId);
 
-  const bacentaScopeItem = Array.isArray(parsed)
-  ? parsed.find(item => item.scopeType === "BacentaLeader")?.scopeItem
-  : null;
-
- // Get roles from localStorage
-const storedRoles = localStorage.getItem('roles');
-
-// Parse it into an array
-const role = storedRoles ? JSON.parse(storedRoles) : [];
-
-// Now you can safely use .some()
-const myScopeType = role.some(role => role.scopeType === "CenterLeader")
-  ? "CenterLeader"
-  : null;
-
-//console.log(myScopeType);
-
-
-useEffect(() => {
-  if (!user) {
-    navigate('/login');
-    setIsAuthenticated(false);
-  } else if (myScopeType !== 'CenterLeader') {
-    navigate('/unauthorized');
-    setIsAuthenticated(false);
-  } else {
-    setIsAuthenticated(true);
-  }
-}, [user, role, navigate]);
-
-
-
-useEffect(() => {
-  const fetchCenter = async () => {
-    try {
-      const { data } = await axios.get(
-        "https://church-management-system-39vg.onrender.com/api/centers/"
-      );
-      setCenter(data);
-
-      // Find center directly from fetched data
-      if (centerScopeItem) {
-        const matchedCenter = data.find(item => item._id === centerScopeItem);
-        setFoundCenter(matchedCenter || null);
-      }
-    } catch (error) {
-      console.error("Error fetching center:", error);
-    }
-  };
-
-  fetchCenter();
-}, [centerScopeItem]);
-
-
-
+  // ✅ Authentication check
   useEffect(() => {
-    const fetchZone = async () => {
-      try {
-        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-        setZone(response.data); // Assuming this is an array of zones
-        
-        // Filter zones based on the centerName
-        const filteredZones = response.data.filter(item => item.center === foundCenter._id);
-        setFoundZone(filteredZones); // Set zones that match the centerName
-       
-
-      } catch (error) {
-        console.error("Error fetching zone:", error);
-      }
-    };
-    fetchZone();
-  }, [foundCenter]); // Dependency on foundCenter to update when it changes
-
-   // Fetch bacentas data
-
-   useEffect(() => {
-     const fetchBacenta = async () => {
-       try {
-         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-         setBacenta(response.data); // Adjust according to your API response
-
-          // Filter bacenta based on the centerName
-        const filteredBacentas = response.data.filter(item => item.center === foundCenter._id);
-        //const filteredBacentas = response.data.filter(item => item.center === foundCenter._id);
-        setFoundBacenta(filteredBacentas); // Set zones that match the centerName
-         
-       } catch (error) {
-         console.error("Error fetching bacenta:", error);
-       }
-     };
-     fetchBacenta();
-   }, [[foundCenter]]);
-
-    // Fetch attendance data
-
-    useEffect(() => {
-      const fetchAttendance = async () => {
-        try {
-          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/attendances/");
-          setAttendance(response.data); // Adjust according to your API response
-          
-        } catch (error) {
-          console.error("Error fetching attendance:", error);
-        }
-      };
-      fetchAttendance();
-    }, []);
-
-// CALCULATING THE PERCENTAGE ACHIEVED FOR BACENTA
-
-useEffect(() => {
-  const calculateProgress = () => {
-    if(foundCenter.centerName === "BANK QUARTERS"){
-      setBacentaTarget(120);
-      setAttendanceTarget(500);
-      setMembershipTarget(2000);
-    }
-    else  if(foundCenter.centerName === "TOPBASE DAM HEIGHTS"){
-      setBacentaTarget(30);
-      setAttendanceTarget(200);
-      setMembershipTarget(500);
-    }else  if(foundCenter.centerName === "OBLOGO"){
-      setBacentaTarget(30);
-      setAttendanceTarget(200);
-      setMembershipTarget(500);
-    }else  if(foundCenter.centerName === "NEW GBAWE CP"){
-      setBacentaTarget(30);
-      setAttendanceTarget(200);
-      setMembershipTarget(500);
-    }else  if(foundCenter.centerName === "WEMBLEY"){
-      setBacentaTarget(30);
-      setAttendanceTarget(200);
-      setMembershipTarget(500);
-    }else  if(foundCenter.centerName === "ESCHATOS"){
-      setBacentaTarget(30);
-      setAttendanceTarget(200);
-      setMembershipTarget(500);
-    }
-
-    
-
-
-    setMembership(422);
-
-    // Calculate progress and ensure it's a percentage between 0 and 100
-    if (foundBacenta.length && bacentaTarget > 0) {
-      const progress = (foundBacenta.length / bacentaTarget) * 100;  // Multiplying by 100 to get percentage
-      setBacentaProgress(progress.toFixed(2));  // Format to 2 decimal places
+    if (!user) {
+      navigate('/login');
+      setIsAuthenticated(false);
+    } else if (!centerLeaderRole) {
+      navigate('/unauthorized');
+      setIsAuthenticated(false);
     } else {
-      setBacentaProgress(0);  // Return 0 if no progress
+      setIsAuthenticated(true);
     }
-    
-    // For membership progress
-    setMembershipProgress((membership / membershipTarget).toFixed(2));
+  }, [user, centerLeaderRole, navigate]);
 
-    //Calculating for bacenta attendance progress
-    const totalBacentaMeetingAttendance = attendance.reduce((sum, item) => sum + item.bacentaMeetingAttendance, 0);
-    setBacentaAttendanceProgress(totalBacentaMeetingAttendance);
+  // Fetch center
+  useEffect(() => {
+    if (!centerId) return;
+    axios.get("https://church-management-system-39vg.onrender.com/api/centers/")
+      .then(res => setFoundCenter(res.data.find(c => c._id === centerId)))
+      .catch(err => console.error(err));
+  }, [centerId]);
 
-    //Calculating for sunday attendance progress
-    const totalSundayAttendance = attendance.reduce((sum, item) => sum + item.adultAttendance, 0);
-    setSundayAttendanceProgress(totalSundayAttendance);
-  };
+  // Fetch zones
+  useEffect(() => {
+    if (!foundCenter) return;
+    axios.get("https://church-management-system-39vg.onrender.com/api/zones/")
+      .then(res => setFoundZone(res.data.filter(z => z.center === foundCenter._id)))
+      .catch(err => console.error(err));
+  }, [foundCenter]);
 
-  calculateProgress();
-}, [bacenta]);  // Ensure this effect runs when `bacenta` changes
+  // Fetch bacentas
+  useEffect(() => {
+    if (!foundCenter) return;
+    axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/")
+      .then(res => setFoundBacenta(res.data.filter(b => b.center === foundCenter._id)))
+      .catch(err => console.error(err));
+  }, [foundCenter]);
 
+  // Fetch membership
+  useEffect(() => {
+    if (!centerId) return;
+    axios.get("https://church-management-system-39vg.onrender.com/api/membership/")
+      .then(res => {
+        const filtered = res.data.filter(m => m.center === centerId);
+        setMembership(filtered.reduce((sum, m) => sum + (m.membershipCount || 0), 0));
+      })
+      .catch(err => console.error(err));
+  }, [centerId]);
 
+  // Fetch attendance
+  useEffect(() => {
+    if (!centerId) return;
+    axios.get("https://church-management-system-39vg.onrender.com/api/attendances/")
+      .then(res => {
+        const filtered = res.data.filter(a => a.center === centerId);
+        setSundayAttendance(filtered.reduce((sum, a) => sum + (a.adultAttendance || 0), 0));
+        setBacentaAttendance(filtered.reduce((sum, a) => sum + (a.bacentaMeetingAttendance || 0), 0));
+      })
+      .catch(err => console.error(err));
+  }, [centerId]);
 
+  // Calculate progress dynamically
+  const bacentaProgress = bacentaTarget ? ((foundBacenta.length / bacentaTarget) * 100).toFixed(2) : 0;
+  const membershipProgress = membershipTarget ? ((membership / membershipTarget) * 100).toFixed(2) : 0;
+  const attendanceProgress = attendanceTarget ? ((sundayAttendance / attendanceTarget) * 100).toFixed(2) : 0;
 
-  const handleNextPageClick = () => navigate('/centers');
-  const handleZonePageClick = () => {
-    navigate('/zones', {
-      state: { foundZone }  // Passing the filteredZone data to the next page
-    });
-  };
+  // Navigation handlers
+  const handleZonePageClick = () => navigate('/zones', { state: { foundZone } });
   const handleBacentaPageClick = () => navigate('/bacentas');
-  const handleAttenancePageClick = () => navigate('/attendance');
 
   const columns = [
     { field: "id", headerName: "Summary", editable: false },
-    { field: "adults", headerName: "Adults", flex: 1, editable: true },
-    { field: "keeplet", headerName: "Keeplets", flex: 1, editable: true },
-    { field: "total", headerName: "Total", flex: 1, editable: true },
+    { field: "adults", headerName: "Adults", flex: 1 },
+    { field: "keeplet", headerName: "Keeplets", flex: 1 },
+    { field: "total", headerName: "Total", flex: 1 },
   ];
 
   const rows = [
@@ -247,154 +125,107 @@ useEffect(() => {
     { id: 'Difference', adults: 123, keeplet: 167, total: 290 },
   ];
 
- 
-
   return (
     <Box m="20px">
-      {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title={`DASHBOARD - ${foundCenter.centerName} Center`} subtitle="Welcome to your dashboard" />
-        <Box>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
-          </Button>
+        <Header title={`DASHBOARD - ${foundCenter?.centerName || ""} Center`} subtitle="Welcome to your dashboard" />
+        <Button sx={{ backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px" }}>
+          <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+          Download Reports
+        </Button>
+      </Box>
+
+      <Box display="grid" gridTemplateColumns={isMobile ? "repeat(4, 1fr)" : "repeat(9, 1fr)"} gridAutoRows="140px" gap="20px">
+
+        {/* Zones */}
+        <Box
+          gridColumn={isMobile ? "span 4" : "span 3"}
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ cursor: 'pointer' }}
+          onClick={handleZonePageClick}
+        >
+          <StatBox
+            title={foundZone.length}
+            subtitle="No of Zones"
+            // progress="0.50"
+            // increase="+21%"
+            icon={<GpsFixedIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
+          />
+        </Box>
+        <Box
+          gridColumn={isMobile ? "span 4" : "span 3"}
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ cursor: 'pointer' }}
+          onClick={handleBacentaPageClick}
+        >
+          <StatBox
+            title={foundBacenta.length}
+            subtitle="No of Bacentas"
+            progress={bacentaProgress / 100}
+            increase={`${bacentaProgress}%`}
+            icon={<WorkspacesIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
+          />
+        </Box>
+        <Box
+          gridColumn={isMobile ? "span 4" : "span 3"}
+          backgroundColor={colors.primary[400]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={membership}
+            subtitle="Total Membership"
+            progress={membershipProgress}
+            increase={`${membershipProgress * 100}%`}
+            icon={<Diversity1Icon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
+          />
+        </Box>
+
+        {/* Sunday Attendance */}
+        <Box gridColumn={isMobile ? "span 4" : "span 8"} gridRow="span 2" backgroundColor={colors.primary[400]}>
+          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h5" fontWeight="600" color={colors.grey[100]}>Sunday Attendance</Typography>
+              <Typography variant="h3" fontWeight="bold" color={colors.greenAccent[500]}>{sundayAttendance}</Typography>
+            </Box>
+            <Box>
+              <IconButton><DownloadOutlinedIcon sx={{ fontSize: "26px", color: colors.greenAccent[500] }} /></IconButton>
+            </Box>
+          </Box>
+          <Box height="250px" m="-20px 0 0 0">
+            <LineChart isDashboard={true} />
+          </Box>
+        </Box>
+
+
+
+
+        {/* Bacenta Attendance */}
+        <Box gridColumn={isMobile ? "span 4" : "span 4"} gridRow="span 2" backgroundColor={colors.primary[400]} p="30px">
+          <Typography variant="h5" fontWeight="600">Bacenta Meeting Attendance</Typography>
+          <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
+            <ProgressCircle size="125" progress={bacentaAttendance / membership} />
+            <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>{((bacentaAttendance / membership) * 100).toFixed(2)}%</Typography>
+            <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>{bacentaAttendance} attendance recorded</Typography>
+          </Box>
+        </Box>
+
+        {/* Other charts */}
+        <Box gridColumn={isMobile ? "span 4" : "span 6"} gridRow="span 2" backgroundColor={colors.primary[400]}>
+          <Typography variant="h5" fontWeight="600" sx={{ padding: "30px 30px 0 30px" }}>Centers Attendance</Typography>
+          <Box height="250px" mt="-20px"><BarChart isDashboard={true} /></Box>
+        </Box>
+        <Box gridColumn={isMobile ? "span 4" : "span 6"} gridRow="span 2" backgroundColor={colors.primary[400]} padding="30px">
+          <DataGrid rows={rows} columns={columns} />
         </Box>
       </Box>
-
-      <Box
-  display="grid"
-  gridTemplateColumns={isMobile ? "repeat(4, 1fr)" : "repeat(12, 1fr)"} // Columns for different screen sizes
-  gridAutoRows="140px"
-  gap="20px"
->
-  {/* ROW 1 - 3 boxes */}
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 4"} // Each box takes 4 columns on large screens
-    backgroundColor={colors.primary[400]}
-    display="flex"
-    alignItems="center"
-    justifyContent="center"
-    sx={{ cursor: 'pointer' }}
-    onClick={handleZonePageClick}
-  >
-    <StatBox
-      title={foundZone.length}
-      subtitle="No of Zones"
-      progress="0.50"
-      increase="+21%"
-      icon={<GpsFixedIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
-    />
-  </Box>
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 4"} // Each box takes 4 columns on large screens
-    backgroundColor={colors.primary[400]}
-    display="flex"
-    alignItems="center"
-    justifyContent="center"
-    sx={{ cursor: 'pointer' }}
-    onClick={handleBacentaPageClick}
-  >
-    <StatBox
-      title={foundBacenta.length}
-      subtitle="No of Bacentas"
-      progress={bacentaProgress / 100}
-      increase={`${bacentaProgress}%`}
-      icon={<WorkspacesIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
-    />
-  </Box>
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 4"} // Each box takes 4 columns on large screens
-    backgroundColor={colors.primary[400]}
-    display="flex"
-    alignItems="center"
-    justifyContent="center"
-  >
-    <StatBox
-      title={membership}
-      subtitle="Total Membership"
-      progress={membershipProgress}
-      increase={`${membershipProgress * 100}%`}
-      icon={<Diversity1Icon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
-    />
-  </Box>
-
-  {/* ROW 2 - 2 boxes */}
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 8"} // Box spans 8 columns in large view
-    gridRow="span 2"
-    backgroundColor={colors.primary[400]}
-  >
-    <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-      <Box>
-        <Typography variant="h5" fontWeight="600" color={colors.grey[100]}>
-          Sunday Attendance
-        </Typography>
-        <Typography variant="h3" fontWeight="bold" color={colors.greenAccent[500]}>
-          422
-        </Typography>
-      </Box>
-      <Box>
-        <IconButton>
-          <DownloadOutlinedIcon sx={{ fontSize: "26px", color: colors.greenAccent[500] }} />
-        </IconButton>
-      </Box>
-    </Box>
-    <Box height="250px" m="-20px 0 0 0">
-      <LineChart isDashboard={true} />
-    </Box>
-  </Box>
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 4"} // Box spans 4 columns in large view
-    gridRow="span 2"
-    backgroundColor={colors.primary[400]}
-    p="30px"
-  >
-    <Typography variant="h5" fontWeight="600" alignItems="center">
-      Bacenta Meeting Attendance
-    </Typography>
-    <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
-      <ProgressCircle size="125" progress={bacentaAttendanceProgress / membership} />
-      <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-        {((bacentaAttendanceProgress / membership) * 100).toFixed(2)}%
-      </Typography>
-      <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-        {bacentaAttendanceProgress} attendance recorded
-      </Typography>
-    </Box>
-  </Box>
-
-  {/* ROW 3 - 2 boxes */}
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 6"} // Box spans 6 columns in large view
-    gridRow="span 2"
-    backgroundColor={colors.primary[400]}
-  >
-    <Typography variant="h5" fontWeight="600" sx={{ padding: "30px 30px 0 30px" }}>
-      Centers Attendance
-    </Typography>
-    <Box height="250px" mt="-20px">
-      <BarChart isDashboard={true} />
-    </Box>
-  </Box>
-  <Box
-    gridColumn={isMobile ? "span 4" : "span 6"} // Box spans 6 columns in large view
-    gridRow="span 2"
-    backgroundColor={colors.primary[400]}
-    padding="30px"
-  >
-    <DataGrid rows={rows} columns={columns} />
-  </Box>
-</Box>
-
     </Box>
   );
 };

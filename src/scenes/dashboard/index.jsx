@@ -9,7 +9,7 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import Diversity1Icon from '@mui/icons-material/Diversity1';
 import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
+import AdminLineChart from "../../components/AdminLineChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
@@ -20,61 +20,91 @@ const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check for mobile size
+
   const [center, setCenter] = useState([]);
   const [zone, setZone] = useState([]);
   const [bacenta, setBacenta] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [membership, setMembership] = useState(422);
+  const [membership, setMembership] = useState(0);
   const [bacentaProgress, setBacentaProgress] = useState(0);
   const [sundayAttendanceProgress, setSundayAttendanceProgress] = useState(0);
-  const [bacentaTarget, setBacentaTarget] = useState([]);
-  const [attendanceTarget, setAttendanceTarget] = useState([]);
-  const [membershipTarget, setMembershipTarget] = useState([]);
+
+  const [targets, setTargets] = useState([]);
+  const [bacentaTarget, setBacentaTarget] = useState(0);
+  const [membershipTarget, setMembershipTarget] = useState(0);
+  const [attendanceTarget, setAttendanceTarget] = useState(0);
+
   const [membershipProgress, setMembershipProgress] = useState([]);
   const [bacentaAttendanceProgress, setBacentaAttendanceProgress] = useState([]);
+  const [scopeType, setScopeType] = useState(null);
+  const [scopeItem, setScopeItem] = useState(null);
+  const [averageSundayAttendance, setAverageSundayAttendance] = useState(0);
+  const [averageBacentaAttendance, setAverageBacentaAttendance] = useState(0);
+
+
+  const [filteredMembership, setFilteredMembership] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
   const navigate = useNavigate(); // Initialize navigate hook
   //const { user } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-// ✅ Get stored values
-const storedUser = localStorage.getItem("user");
-const storedRoles = localStorage.getItem("roles");
+  // ✅ Get stored values
+  const storedUser = localStorage.getItem("user");
+  const storedRoles = localStorage.getItem("roles");
 
-const user = storedUser ? JSON.parse(storedUser) : null;
-const roles = storedRoles ? JSON.parse(storedRoles) : [];
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const roles = storedRoles ? JSON.parse(storedRoles) : [];
 
-// ✅ Authentication check
-useEffect(() => {
-  if (!user) {
-    // No user → send to login
-    navigate("/login");
-    setIsAuthenticated(false);
-    return;
-  }
+  // ✅ Authentication check
+  useEffect(() => {
+    if (!user) {
+      // No user → send to login
+      navigate("/login");
+      setIsAuthenticated(false);
+      return;
+    }
 
-  // Find a role with scopeType === administrator (case-insensitive)
-  const isAdmin = roles.some(
-    (r) => r.scopeType?.toLowerCase() === "administrator"
-  );
+    // Find a role with scopeType === administrator (case-insensitive)
+    const isAdmin = roles.some(
+      (r) => r.scopeType?.toLowerCase() === "administrator"
+    );
 
-  if (!isAdmin) {
-    // User exists but not administrator → block
-    navigate("/unauthorized");
-    setIsAuthenticated(false);
-    return;
-  }
+    if (!isAdmin) {
+      // User exists but not administrator → block
+      navigate("/unauthorized");
+      setIsAuthenticated(false);
+      return;
+    }
 
-  // User exists and is administrator → allow
-  setIsAuthenticated(true);
-}, [user, roles, navigate]);
+    // User exists and is administrator → allow
+    setIsAuthenticated(true);
+  }, [user, roles, navigate]);
+
+  // ✅ Determine user access scope
+  useEffect(() => {
+    const roleData = localStorage.getItem("roles");
+    const roleAssignments = roleData ? JSON.parse(roleData) : [];
+
+    const assignedRole = roleAssignments[0]; // Assume one primary role
+    if (assignedRole) {
+      setScopeType(assignedRole.scopeType);
+      setScopeItem(assignedRole.scopeItem);
+    } else {
+      setScopeType("Administrator");
+      setScopeItem("ALL");
+    }
+  }, []);
 
 
-// Fetch centers data
- useEffect(() => {
+  // Fetch centers data
+  useEffect(() => {
     const fetchCenter = async () => {
       try {
         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/centers/");
         setCenter(response.data); // Adjust according to your API response
-        
+
       } catch (error) {
         console.error("Error fetching center:", error);
       }
@@ -83,82 +113,225 @@ useEffect(() => {
   }, []);
 
 
- // Fetch zones data
+  // Fetch zones data
 
- useEffect(() => {
-   const fetchZone = async () => {
-     try {
-       const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
-       setZone(response.data); // Adjust according to your API response
-       
-     } catch (error) {
-       console.error("Error fetching zone:", error);
-     }
-   };
-   fetchZone();
- }, []);
+  useEffect(() => {
+    const fetchZone = async () => {
+      try {
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/zones/");
+        setZone(response.data); // Adjust according to your API response
 
-   // Fetch bacentas data
+      } catch (error) {
+        console.error("Error fetching zone:", error);
+      }
+    };
+    fetchZone();
+  }, []);
 
-   useEffect(() => {
-     const fetchBacenta = async () => {
-       try {
-         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
-         setBacenta(response.data); // Adjust according to your API response
-         
-       } catch (error) {
-         console.error("Error fetching bacenta:", error);
-       }
-     };
-     fetchBacenta();
-   }, []);
+  // Fetch bacentas data
 
-    // Fetch attendance data
+  useEffect(() => {
+    const fetchBacenta = async () => {
+      try {
+        const response = await axios.get("https://church-management-system-39vg.onrender.com/api/bacentas/");
+        setBacenta(response.data); // Adjust according to your API response
 
-    useEffect(() => {
-      const fetchAttendance = async () => {
-        try {
-          const response = await axios.get("https://church-management-system-39vg.onrender.com/api/attendances/");
-          setAttendance(response.data); // Adjust according to your API response
-          
-        } catch (error) {
-          console.error("Error fetching attendance:", error);
+      } catch (error) {
+        console.error("Error fetching bacenta:", error);
+      }
+    };
+    fetchBacenta();
+  }, []);
+
+  useEffect(() => {
+    const fetchTarget = async () => {
+      try {
+        const { data } = await axios.get("https://church-management-system-39vg.onrender.com/api/targets/");
+        setTargets(data);
+
+        // --- 1. Get the current month (0–11) ---
+        const currentMonth = new Date().getMonth();
+
+        // --- 2. Check if scopeType = CenterLeader ---
+        if (scopeType === "CenterLeader" && scopeItem) {
+          // --- 3. Find the target with matching center ---
+          const centerTarget = data.find(
+            (t) => t.center?.toLowerCase() === scopeItem.toLowerCase()
+          );
+
+          if (centerTarget) {
+            // --- 4. Find this month’s performance data ---
+            const monthData = centerTarget.performanceData?.find(
+              (item) => item.month === currentMonth
+            );
+
+            if (monthData) {
+              // --- 5. Set the monthly target values ---
+              setMembershipTarget(monthData.targetMembers || 0);
+              setBacentaTarget(monthData.targetBacentas || 0);
+              setAttendanceTarget(monthData.targetChurchAttendance || 0);
+            } else {
+              console.warn("No performance data for current month.");
+            }
+          } else {
+            console.warn("No target found for this center.");
+          }
         }
-      };
-      fetchAttendance();
-    }, []);
 
-// CALCULATING THE PERCENTAGE ACHIEVED FOR BACENTA
+        // === Optional: Yearly Target ===
+        const yearlyTarget = data.find(
+          (t) => t.targetName?.toLowerCase() === "yearly"
+        );
+        if (yearlyTarget) {
+          setBacentaTarget(yearlyTarget.bacenta || 0);
+          setMembershipTarget(yearlyTarget.membership || 0);
+          setAttendanceTarget(yearlyTarget.attendance || 0);
+        }
 
-useEffect(() => {
-  const calculateProgress = () => {
-    setBacentaTarget(240);
-    setAttendanceTarget(1300);
-    setMembershipTarget(4000);
-    setMembership(422);
+      } catch (error) {
+        console.error("Error fetching target:", error);
+      }
+    };
 
-    // Calculate progress and ensure it's a percentage between 0 and 100
-    if (bacenta.length && bacentaTarget > 0) {
-      const progress = (bacenta.length / bacentaTarget) * 100;  // Multiplying by 100 to get percentage
-      setBacentaProgress(progress.toFixed(2));  // Format to 2 decimal places
-    } else {
-      setBacentaProgress(0);  // Return 0 if no progress
-    }
-    
-    // For membership progress
-    setMembershipProgress((membership / membershipTarget).toFixed(2));
+    fetchTarget();
+  }, [scopeType, scopeItem]);
 
-    //Calculating for bacenta attendance progress
-    const totalBacentaMeetingAttendance = attendance.reduce((sum, item) => sum + item.bacentaMeetingAttendance, 0);
-    setBacentaAttendanceProgress(totalBacentaMeetingAttendance);
 
-    //Calculating for sunday attendance progress
-    const totalSundayAttendance = attendance.reduce((sum, item) => sum + item.adultAttendance, 0);
-    setSundayAttendanceProgress(totalSundayAttendance);
-  };
 
-  calculateProgress();
-}, [bacenta]);  // Ensure this effect runs when `bacenta` changes
+  // console.log(bacentaTarget);
+  // console.log(membershipTarget);
+  // console.log(attendanceTarget);
+
+  // ✅ Fetch membership and filter by scope
+  useEffect(() => {
+    const fetchMembership = async () => {
+      try {
+        const { data } = await axios.get("https://church-management-system-39vg.onrender.com/api/membership/");
+
+        let filtered = data;
+
+        // Filter membership based on scopeType and scopeItem
+        if (scopeType && scopeItem && scopeType !== "administrator") {
+          filtered = data.filter((m) => {
+            if (scopeType === "CenterLeader") return m.center === scopeItem;
+            if (scopeType === "ZoneLeader") return m.zone === scopeItem;
+            if (scopeType === "BacentaLeader") return m.bacenta === scopeItem;
+            return false;
+          });
+        }
+
+        setFilteredMembership(filtered);
+
+        // ✅ Calculate and set total membership count dynamically
+        const totalCount = filtered.reduce(
+          (sum, m) => sum + (m.membershipCount || 0),
+          0
+        );
+        setMembership(totalCount);
+      } catch (err) {
+        setError("Error fetching membership data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
+    if (scopeType) fetchMembership();
+  }, [scopeType, scopeItem]);
+
+
+  // ✅ Fetch attendance and calculate average attendance per month
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const { data } = await axios.get("https://church-management-system-39vg.onrender.com/api/attendances/");
+        setAttendance(data);
+
+        // ✅ Extract unique "YYYY-MM" months from attendance dates
+        const monthsRecorded = new Set(
+          data
+            .map((item) => {
+              const date = new Date(item.date);
+              // Format as "YYYY-MM"
+              return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+            })
+        ).size || 1;
+
+        // ✅ Calculate total attendance across all records
+        const totalSundayAttendance = data.reduce(
+          (sum, item) => sum + (item.adultAttendance || 0),
+          0
+        );
+        const totalBacentaAttendance = data.reduce(
+          (sum, item) => sum + (item.bacentaMeetingAttendance || 0),
+          0
+        );
+
+        // ✅ Calculate averages per month
+        const avgSunday = totalSundayAttendance / monthsRecorded;
+        const avgBacenta = totalBacentaAttendance / monthsRecorded;
+
+        setAverageSundayAttendance(avgSunday);
+        setAverageBacentaAttendance(avgBacenta);
+      } catch (error) {
+        console.error("Error fetching attendance:", error);
+        setError("Error fetching attendance data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendance();
+  }, []);
+
+
+  //  // Fetch attendance data
+
+  //   useEffect(() => {
+  //     const fetchAttendance = async () => {
+  //       try {
+  //         const response = await axios.get("https://church-management-system-39vg.onrender.com/api/attendances/");
+  //         setAttendance(response.data); // Adjust according to your API response
+
+  //       } catch (error) {
+  //         console.error("Error fetching attendance:", error);
+  //       }
+  //     };
+  //     fetchAttendance();
+  //   }, []);
+
+  // CALCULATING THE PERCENTAGE ACHIEVED FOR BACENTA
+
+  useEffect(() => {
+    const calculateProgress = () => {
+      // setBacentaTarget(240);
+      // setAttendanceTarget(1300);
+      // setMembershipTarget(4000);
+      // setMembership(422);
+
+      // Calculate progress and ensure it's a percentage between 0 and 100
+      if (bacenta.length && bacentaTarget > 0) {
+        const progress = (bacenta.length / bacentaTarget) * 100;  // Multiplying by 100 to get percentage
+        setBacentaProgress(progress.toFixed(2));  // Format to 2 decimal places
+      } else {
+        setBacentaProgress(0);  // Return 0 if no progress
+      }
+
+      // For membership progress
+      setMembershipProgress((membership / membershipTarget).toFixed(2));
+
+      //Calculating for bacenta attendance progress
+      const totalBacentaMeetingAttendance = attendance.reduce((sum, item) => sum + item.bacentaMeetingAttendance, 0);
+      setBacentaAttendanceProgress(totalBacentaMeetingAttendance);
+
+      //Calculating for sunday attendance progress
+      const totalSundayAttendance = attendance.reduce((sum, item) => sum + item.adultAttendance, 0);
+      setSundayAttendanceProgress(totalSundayAttendance);
+    };
+
+    calculateProgress();
+  }, [bacenta]);  // Ensure this effect runs when `bacenta` changes
 
   const handleNextPageClick = () => navigate('/centers');
   const handleZonePageClick = () => navigate('/zones');
@@ -219,8 +392,8 @@ useEffect(() => {
           <StatBox
             title={center.length}
             subtitle="No of Centers"
-            progress="0.75"
-            increase="+0%"
+            // progress="0.75"
+            // increase="+0%"
             icon={<CenterFocusStrongIcon sx={{ color: colors.greenAccent[600], fontSize: '26px' }} />}
           />
         </Box>
@@ -236,8 +409,8 @@ useEffect(() => {
           <StatBox
             title={zone.length}
             subtitle="No of Zones"
-            progress="0.50"
-            increase="+21%"
+            // progress="0.50"
+            // increase="+21%"
             icon={<GpsFixedIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
           />
         </Box>
@@ -279,10 +452,11 @@ useEffect(() => {
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="h5" fontWeight="600" color={colors.grey[100]}>
-                Sunday Attendance
+                Sunday Average Attendance
               </Typography>
               <Typography variant="h3" fontWeight="bold" color={colors.greenAccent[500]}>
-                422
+                {averageSundayAttendance.toFixed(0)}
+
               </Typography>
             </Box>
             <Box>
@@ -292,7 +466,7 @@ useEffect(() => {
             </Box>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
+            <AdminLineChart isDashboard={true} />
           </Box>
         </Box>
 
@@ -301,12 +475,12 @@ useEffect(() => {
             Overall Sunday Attendance
           </Typography>
           <Box display="flex" flexDirection="column" alignItems="center" mt="25px" sx={{ cursor: 'pointer' }} onClick={handleAttenancePageClick}>
-            <ProgressCircle size="125" progress={sundayAttendanceProgress / membership} />
+            <ProgressCircle size="125" progress={averageSundayAttendance / attendanceTarget} />
             <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-              {((sundayAttendanceProgress / membership) * 100).toFixed(2)}%
+              {((averageSundayAttendance / attendanceTarget) * 100).toFixed(2)}%
             </Typography>
             <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-              {sundayAttendanceProgress} attendance recorded
+              attendance recorded
             </Typography>
           </Box>
         </Box>
@@ -317,12 +491,12 @@ useEffect(() => {
             Bacenta Meeting Attendance
           </Typography>
           <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
-            <ProgressCircle size="125" progress={bacentaAttendanceProgress / membership} />
+            <ProgressCircle size="125" progress={averageBacentaAttendance / bacentaTarget} />
             <Typography variant="h3" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-              {((bacentaAttendanceProgress / membership) * 100).toFixed(2)}%
+              {((averageBacentaAttendance / bacentaTarget) * 100).toFixed(2)}%
             </Typography>
             <Typography variant="h5" color={colors.greenAccent[500]} sx={{ mt: "15px" }}>
-              {bacentaAttendanceProgress} attendance recorded
+              attendance recorded
             </Typography>
           </Box>
         </Box>

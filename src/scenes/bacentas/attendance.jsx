@@ -25,7 +25,7 @@ const Attendance = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Retrieve user scope info
+  // Retrieve user scope info
   const roleAssignments = localStorage.getItem("roles");
   const parsedRoles = roleAssignments ? JSON.parse(roleAssignments) : [];
 
@@ -44,7 +44,7 @@ const Attendance = () => {
     (zoneLeader && "ZoneLeader") ||
     (bacentaLeader && "BacentaLeader");
 
-  // ✅ Fetch Attendance, Zones, and Bacentas
+  // Fetch Attendance, Zones, and Bacentas
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,7 +74,7 @@ const Attendance = () => {
     fetchData();
   }, []);
 
-  // ✅ Combine Attendance + Bacenta + Zone + Center + Filter by Scope
+  // Combine Attendance + Bacenta + Zone + Filter by Scope
   useEffect(() => {
     if (attendances.length > 0 && bacentas.length > 0 && zones.length > 0) {
       const combined = attendances.map((attendance) => {
@@ -83,10 +83,12 @@ const Attendance = () => {
         const relatedZone =
           zones.find((z) => z._id === relatedBacenta.zone) || {};
 
-        // ✅ Format date as DD/MM/YYYY
+        // Format date as DD/MM/YYYY and keep original date for sorting
         let formattedDate = "Invalid Date";
+        let originalDate = null;
         if (attendance.date) {
           const d = new Date(attendance.date);
+          originalDate = d;
           const day = String(d.getDate()).padStart(2, "0");
           const month = String(d.getMonth() + 1).padStart(2, "0");
           const year = d.getFullYear();
@@ -95,8 +97,9 @@ const Attendance = () => {
 
         return {
           id: attendance._id,
-          bacentaId: attendance.bacenta, // ✅ added so we can filter properly
+          bacentaId: attendance.bacenta,
           date: formattedDate,
+          originalDate, // For sorting
           bacentaName:
             relatedBacenta.bacentaName ||
             attendance.bacentaName ||
@@ -115,29 +118,33 @@ const Attendance = () => {
         };
       });
 
-      // ✅ Filter based on user's scope
+      // Filter based on user's scope
       let scopedAttendances = combined;
 
       if (userScopeType === "BacentaLeader" && bacentaLeader) {
-        // ✅ Show only attendances for this bacenta
         scopedAttendances = combined.filter(
           (att) => att.bacentaId === bacentaLeader
         );
       } else if (userScopeType === "ZoneLeader" && zoneLeader) {
-        // ✅ Show attendances under this zone
         scopedAttendances = combined.filter((att) => att.zoneId === zoneLeader);
       } else if (userScopeType === "CenterLeader" && centerLeader) {
-        // ✅ Show attendances under this center
         scopedAttendances = combined.filter(
           (att) => att.centerId === centerLeader
         );
       }
 
+      // Optionally sort by date ascending
+      scopedAttendances.sort((a, b) => {
+        const dateA = a.originalDate || new Date(0);
+        const dateB = b.originalDate || new Date(0);
+        return dateA - dateB;
+      });
+
       setAttendanceList(scopedAttendances);
     }
   }, [attendances, bacentas, zones, centerLeader, zoneLeader, bacentaLeader]);
 
-  // ✅ Search filter
+  // Search filter
   const handleSearch = (query) => {
     setSearchQuery(query);
   };
@@ -151,14 +158,24 @@ const Attendance = () => {
     );
   });
 
-  // ✅ Add Attendance button
+  // Add Attendance button
   const handleAddButtonClick = () => {
     navigate("/add-attendance");
   };
 
-  // ✅ Columns for DataGrid
+  // Columns for DataGrid
   const columns = [
-    { field: "date", headerName: "Date", flex: 1 },
+    {
+      field: "date",
+      headerName: "Date",
+      flex: 1,
+      sortable: true,
+      sortComparator: (v1, v2, cellParams1, cellParams2) => {
+        const date1 = cellParams1?.row?.originalDate || new Date(0);
+        const date2 = cellParams2?.row?.originalDate || new Date(0);
+        return date1 - date2;
+      },
+    },
     { field: "bacentaName", headerName: "Bacenta Name", flex: 1 },
     { field: "bacentaMembersNo", headerName: "Members", flex: 1 },
     { field: "adultAttendance", headerName: "Adults", flex: 1 },
@@ -220,3 +237,5 @@ const Attendance = () => {
 };
 
 export default Attendance;
+
+
